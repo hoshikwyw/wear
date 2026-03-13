@@ -10,9 +10,9 @@ import ProductDetails from './components/ProductDetails'
 import ProductCustomizer from './components/ProductCustomizer'
 import AllProducts from './components/AllProducts'
 import AdminLogin from './components/admin/AdminLogin'
-import AddProduct from './components/admin/AddProduct'
+import AdminDashboard from './components/admin/AdminDashboard'
 
-type View = 'home' | 'product-details' | 'customizer' | 'all-products' | 'admin-login' | 'admin-add'
+type View = 'home' | 'product-details' | 'customizer' | 'all-products' | 'admin-login' | 'admin'
 
 function App() {
   const [view, setView] = useState<View>('home')
@@ -20,7 +20,6 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
   const [isAdminAuthed, setIsAdminAuthed] = useState(false)
 
-  // Allow navigating to admin via /#admin in the browser
   useEffect(() => {
     if (window.location.hash === '#admin') {
       window.location.hash = ''
@@ -54,17 +53,13 @@ function App() {
   }
 
   const openAdmin = () => {
-    if (isAdminAuthed) {
-      setView('admin-add')
-    } else {
-      setView('admin-login')
-    }
+    setView(isAdminAuthed ? 'admin' : 'admin-login')
     window.scrollTo(0, 0)
   }
 
   const handleAdminLogin = () => {
     setIsAdminAuthed(true)
-    setView('admin-add')
+    setView('admin')
     window.scrollTo(0, 0)
   }
 
@@ -77,8 +72,8 @@ function App() {
     return <AdminLogin onLogin={handleAdminLogin} onBack={goHome} />
   }
 
-  if (view === 'admin-add' && isAdminAuthed) {
-    return <AddProduct onBack={goHome} onLogout={handleAdminLogout} />
+  if (view === 'admin' && isAdminAuthed) {
+    return <AdminDashboard onLogout={handleAdminLogout} onBackToStore={goHome} />
   }
 
   if (view === 'all-products') {
