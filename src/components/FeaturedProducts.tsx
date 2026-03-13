@@ -68,27 +68,30 @@ const products: Product[] = [
 
 function FeaturedProducts() {
   return (
-    <section className="py-24 max-md:py-14" id="new-arrivals">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-14">
-          <h2 className="font-display text-[34px] max-md:text-[26px] font-semibold text-primary tracking-tight mb-3">
+    <section className="pt-4 pb-12 sm:pt-6 sm:pb-16 lg:py-24 px-4 sm:px-6" id="new-arrivals">
+      <div className="max-w-[1200px] mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8 sm:mb-12 lg:mb-14">
+          <h2 className="font-display text-[24px] sm:text-[28px] lg:text-[34px] font-semibold text-primary tracking-tight mb-2">
             New Arrivals
           </h2>
-          <p className="text-secondary text-[17px] font-light max-w-[420px] mx-auto">
-            Fresh styles just dropped — be the first to wear them
+          <p className="text-secondary text-[14px] sm:text-[16px] font-light">
+            Fresh styles, just dropped
           </p>
         </div>
 
-        <div className="grid grid-cols-4 max-lg:grid-cols-3 max-md:grid-cols-2 gap-5 max-md:gap-4">
+        {/* Grid — 2 cols mobile, 3 tablet, 4 desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
 
-        <div className="text-center mt-14">
+        {/* CTA — large button */}
+        <div className="text-center mt-10 sm:mt-14 px-4 sm:px-0">
           <a
             href="#"
-            className="inline-flex items-center justify-center px-8 py-3 text-[14px] font-medium text-accent bg-white/60 backdrop-blur-xl border border-white/40 rounded-full hover:bg-white/80 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+            className="inline-flex items-center justify-center w-full sm:w-auto h-[50px] sm:h-[46px] px-8 text-[14px] sm:text-[13px] font-medium text-primary bg-white/55 backdrop-blur-xl border border-white/40 rounded-full active:scale-[0.97] sm:hover:bg-white/75 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
           >
             View All Products
           </a>

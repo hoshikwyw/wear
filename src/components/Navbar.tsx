@@ -1,59 +1,74 @@
 import { useState } from 'react'
-import { Search, User, ShoppingBag, Menu, X } from 'lucide-react'
+import { Search, ShoppingBag, Menu, X, User } from 'lucide-react'
 
 function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [open, setOpen] = useState(false)
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/60 backdrop-blur-2xl border-b border-white/30 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-      <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-[52px]">
-        <a href="/" className="text-[20px] font-semibold tracking-[3px] text-primary">
-          WEAR
-        </a>
+    <header className="sticky top-0 z-50 px-3 pt-2 sm:px-4 sm:pt-3">
+      <nav className="mx-auto w-full max-w-[860px] bg-white/50 backdrop-blur-2xl backdrop-saturate-150 rounded-xl sm:rounded-2xl border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.5)]">
+        {/* Main bar */}
+        <div className="flex items-center justify-between h-[48px] px-4 sm:px-5">
+          {/* Logo */}
+          <a href="/" className="text-[15px] sm:text-[16px] font-semibold tracking-[3px] text-primary/85">
+            WEAR
+          </a>
 
-        <ul
-          className={`
-            flex gap-7
-            max-md:fixed max-md:top-[52px] max-md:left-0 max-md:right-0 max-md:bg-white/70 max-md:backdrop-blur-2xl max-md:flex-col max-md:items-center max-md:py-8 max-md:gap-5 max-md:border-b max-md:border-white/30 max-md:transition-all max-md:duration-300
-            ${mobileMenuOpen ? 'max-md:translate-y-0 max-md:opacity-100' : 'max-md:-translate-y-full max-md:opacity-0 max-md:pointer-events-none'}
-          `}
-        >
-          {['New Arrivals', 'Categories', 'Men', 'Women', 'Unisex'].map((link) => (
-            <li key={link}>
+          {/* Desktop links */}
+          <ul className="hidden md:flex items-center gap-1">
+            {['New Arrivals', 'Categories', 'Men', 'Women', 'Unisex'].map((link) => (
+              <li key={link}>
+                <a
+                  href={`#${link.toLowerCase().replace(' ', '-')}`}
+                  className="text-[12px] font-medium text-primary/45 hover:text-primary hover:bg-white/50 px-3 py-1.5 rounded-lg transition-all"
+                >
+                  {link}
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          {/* Actions — large touch targets (44px min) */}
+          <div className="flex items-center">
+            <button className="w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all" aria-label="Search">
+              <Search size={18} strokeWidth={1.5} />
+            </button>
+            <button className="hidden sm:flex w-[44px] h-[44px] items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 transition-all" aria-label="Account">
+              <User size={18} strokeWidth={1.5} />
+            </button>
+            <button className="relative w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all" aria-label="Cart">
+              <ShoppingBag size={18} strokeWidth={1.5} />
+              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-0.5 bg-accent text-white text-[9px] font-semibold rounded-full flex items-center justify-center">
+                0
+              </span>
+            </button>
+            <button
+              className="md:hidden w-[44px] h-[44px] flex items-center justify-center text-primary/50 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all"
+              aria-label="Toggle menu"
+              onClick={() => setOpen(!open)}
+            >
+              {open ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {open && (
+          <div className="md:hidden border-t border-black/5 px-2 py-2">
+            {['New Arrivals', 'Categories', 'Men', 'Women', 'Unisex'].map((link) => (
               <a
+                key={link}
                 href={`#${link.toLowerCase().replace(' ', '-')}`}
-                className="text-[12px] font-normal text-primary/70 hover:text-primary transition-colors"
+                className="flex items-center h-[48px] px-4 text-[15px] text-primary/60 hover:text-primary active:bg-white/40 rounded-xl transition-all"
+                onClick={() => setOpen(false)}
               >
                 {link}
               </a>
-            </li>
-          ))}
-        </ul>
-
-        <div className="flex items-center gap-3">
-          <button className="text-primary/50 hover:text-primary transition-colors p-1.5 rounded-full hover:bg-black/5" aria-label="Search">
-            <Search size={17} strokeWidth={1.5} />
-          </button>
-          <button className="text-primary/50 hover:text-primary transition-colors p-1.5 rounded-full hover:bg-black/5" aria-label="Account">
-            <User size={17} strokeWidth={1.5} />
-          </button>
-          <button className="relative text-primary/50 hover:text-primary transition-colors p-1.5 rounded-full hover:bg-black/5" aria-label="Cart">
-            <ShoppingBag size={17} strokeWidth={1.5} />
-            <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[9px] font-medium w-4 h-4 rounded-full flex items-center justify-center">
-              0
-            </span>
-          </button>
-
-          <button
-            className="md:hidden text-primary p-1"
-            aria-label="Toggle menu"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
-          </button>
-        </div>
-      </div>
-    </nav>
+            ))}
+          </div>
+        )}
+      </nav>
+    </header>
   )
 }
 

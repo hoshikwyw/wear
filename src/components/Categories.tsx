@@ -1,36 +1,59 @@
 const categories = [
-  { name: 'T-Shirts', description: 'Essential everyday comfort', icon: '👕', count: 120 },
-  { name: 'Hoodies', description: 'Cozy warmth, bold style', icon: '🧥', count: 85 },
-  { name: 'Tops & Blouses', description: 'Elegant & versatile', icon: '👚', count: 96 },
-  { name: 'Sweatshirts', description: 'Casual weekend vibes', icon: '🧶', count: 64 },
+  { name: 'T-Shirts', icon: '👕', count: 120 },
+  { name: 'Hoodies', icon: '🧥', count: 85 },
+  { name: 'Tops', icon: '👚', count: 96 },
+  { name: 'Sweatshirts', icon: '🧶', count: 64 },
+  { name: 'Jackets', icon: '🧥', count: 42 },
+  { name: 'Polos', icon: '👔', count: 38 },
 ]
 
 function Categories() {
   return (
-    <section className="py-24 max-md:py-14" id="categories">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-14">
-          <h2 className="font-display text-[34px] max-md:text-[26px] font-semibold text-primary tracking-tight mb-3">
-            Shop by Category
-          </h2>
-          <p className="text-secondary text-[17px] font-light max-w-[420px] mx-auto">
-            Find exactly what you're looking for
-          </p>
-        </div>
+    <section className="pt-2 pb-4 sm:pt-4 sm:pb-6 lg:py-16" id="categories">
+      {/* Mobile: horizontal scroll chips  |  Desktop: centered row */}
 
-        <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-5">
+      {/* Header — left aligned on mobile like social apps */}
+      <div className="px-4 sm:px-6 max-w-[1200px] mx-auto mb-5 sm:mb-8">
+        <h2 className="font-display text-[20px] sm:text-[24px] lg:text-[30px] font-semibold text-primary tracking-tight">
+          Categories
+        </h2>
+      </div>
+
+      {/* Scrollable row on mobile, wrapped grid on desktop */}
+      <div className="px-4 sm:px-6 max-w-[1200px] mx-auto">
+        {/* Mobile: horizontal scroll */}
+        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide sm:hidden -mx-4 px-4"
+          style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+        >
           {categories.map((cat) => (
             <a
               key={cat.name}
               href="#"
-              className="group flex flex-col items-center text-center px-6 py-10 rounded-2xl bg-white/50 backdrop-blur-2xl border border-white/50 shadow-[0_2px_16px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.6)] hover:bg-white/70 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] hover:-translate-y-1 transition-all duration-300"
+              className="flex-none snap-start flex flex-col items-center w-[88px] active:scale-[0.95] transition-transform"
             >
-              <span className="text-[44px] mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon}</span>
-              <h3 className="font-sans text-[17px] font-semibold text-primary mb-1.5">{cat.name}</h3>
-              <p className="text-[13px] text-secondary mb-4">{cat.description}</p>
-              <span className="text-[11px] font-medium text-accent uppercase tracking-wider bg-accent/8 px-3 py-1 rounded-full">
-                {cat.count} items
+              <div className="w-[72px] h-[72px] rounded-2xl bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_2px_10px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.5)] flex items-center justify-center mb-2">
+                <span className="text-[32px]">{cat.icon}</span>
+              </div>
+              <span className="text-[12px] font-medium text-primary text-center leading-tight">
+                {cat.name}
               </span>
+            </a>
+          ))}
+        </div>
+
+        {/* Tablet+ : pill buttons row */}
+        <div className="hidden sm:flex flex-wrap gap-3 lg:gap-4">
+          {categories.map((cat) => (
+            <a
+              key={cat.name}
+              href="#"
+              className="group flex items-center gap-3 px-5 lg:px-6 py-3.5 lg:py-4 rounded-2xl bg-white/50 backdrop-blur-2xl border border-white/50 shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.5)] hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.07)] active:scale-[0.97] transition-all duration-200"
+            >
+              <span className="text-[28px] lg:text-[32px] group-hover:scale-110 transition-transform">{cat.icon}</span>
+              <div className="flex flex-col">
+                <span className="text-[14px] lg:text-[15px] font-semibold text-primary leading-tight">{cat.name}</span>
+                <span className="text-[11px] lg:text-[12px] text-secondary">{cat.count} items</span>
+              </div>
             </a>
           ))}
         </div>

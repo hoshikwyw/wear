@@ -1,60 +1,45 @@
 function Hero() {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden py-20 max-md:min-h-[80vh] max-md:py-12">
-      {/* Ambient background orbs */}
+    <section className="relative flex items-center justify-center overflow-hidden px-4 pt-14 pb-10 sm:py-20 lg:py-28 sm:min-h-[70dvh] lg:min-h-[85vh]">
+      {/* Ambient orbs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/10 blur-3xl" />
-        <div className="absolute top-1/2 -right-48 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-orange-300/10 to-pink-300/10 blur-3xl" />
-        <div className="absolute -bottom-24 left-1/3 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-green-300/10 to-cyan-300/10 blur-3xl" />
+        <div className="absolute -top-20 -left-20 w-[280px] sm:w-[400px] lg:w-[500px] aspect-square rounded-full bg-gradient-to-br from-amber-200/20 to-orange-200/10 blur-3xl" />
+        <div className="absolute top-1/2 -right-24 w-[300px] sm:w-[450px] lg:w-[600px] aspect-square rounded-full bg-gradient-to-br from-rose-200/10 to-amber-100/10 blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-[1200px] mx-auto px-6 w-full text-center">
-        <div className="max-w-[720px] mx-auto">
-          {/* Glass tag */}
-          <span className="inline-block text-[11px] font-medium tracking-[2px] uppercase text-accent mb-6 px-5 py-2 rounded-full bg-accent/8 border border-accent/15 backdrop-blur-md">
-            New Collection 2026
+      <div className="relative z-10 w-full max-w-[680px] mx-auto text-center">
+        {/* Tag */}
+        <span className="inline-block text-[10px] sm:text-[11px] font-medium tracking-[2px] uppercase text-accent mb-5 sm:mb-6 px-4 py-1.5 rounded-full bg-accent/8 border border-accent/15 backdrop-blur-md">
+          New Collection 2026
+        </span>
+
+        {/* Title */}
+        <h1 className="font-display text-[36px] sm:text-[48px] md:text-[56px] lg:text-[72px] font-semibold leading-[1.06] tracking-tight text-primary mb-4 sm:mb-6">
+          Wear What<br />
+          <span className="bg-gradient-to-r from-accent via-[#c4956d] to-accent-dark bg-clip-text text-transparent">
+            Defines You
           </span>
+        </h1>
 
-          <h1 className="font-display text-[76px] max-lg:text-[56px] max-md:text-[40px] font-semibold leading-[1.05] mb-6 text-primary tracking-tight">
-            Wear What<br />
-            <span className="bg-gradient-to-r from-[#0071e3] via-[#af52de] to-[#ff6482] bg-clip-text text-transparent">
-              Defines You
-            </span>
-          </h1>
+        {/* Subtitle — short for mobile */}
+        <p className="text-[15px] sm:text-[17px] lg:text-[18px] leading-relaxed text-secondary font-light mb-8 sm:mb-10 max-w-[400px] mx-auto px-2">
+          Premium tops, hoodies & tees for every style.
+        </p>
 
-          <p className="text-[19px] max-md:text-base leading-relaxed text-secondary mb-10 max-w-[480px] mx-auto font-light">
-            Premium T-shirts, hoodies & top-wear crafted for every style and every body.
-          </p>
-
-          <div className="flex gap-4 justify-center max-md:flex-col max-md:items-center">
-            <a
-              href="#new-arrivals"
-              className="inline-flex items-center justify-center px-8 py-3 text-[14px] font-medium bg-accent text-white rounded-full hover:brightness-110 transition-all shadow-[0_2px_12px_rgba(0,113,227,0.3)] hover:shadow-[0_4px_20px_rgba(0,113,227,0.4)]"
-            >
-              Shop Now
-            </a>
-            <a
-              href="#categories"
-              className="inline-flex items-center justify-center px-8 py-3 text-[14px] font-medium text-accent bg-white/60 backdrop-blur-xl border border-white/40 rounded-full hover:bg-white/80 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-            >
-              Explore
-            </a>
-          </div>
-        </div>
-
-        {/* Glass card decoration */}
-        <div className="mt-16 max-md:mt-10 mx-auto max-w-[560px]">
-          <div className="relative rounded-3xl bg-white/40 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)] p-8 max-md:p-5">
-            <div className="flex items-center justify-between text-sm text-secondary">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_6px_rgba(52,199,89,0.5)]" />
-                Free shipping on orders over $50
-              </span>
-              <span className="text-xs bg-white/60 backdrop-blur px-3 py-1 rounded-full border border-white/40">
-                New
-              </span>
-            </div>
-          </div>
+        {/* CTA — stacked on mobile, large touch targets */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-3 items-center justify-center px-4 sm:px-0">
+          <a
+            href="#new-arrivals"
+            className="w-full sm:w-auto inline-flex items-center justify-center h-[50px] sm:h-[46px] px-8 text-[14px] sm:text-[13px] font-medium bg-primary text-white rounded-full hover:bg-primary-light active:scale-[0.97] transition-all shadow-[0_2px_10px_rgba(27,27,27,0.2)]"
+          >
+            Shop Now
+          </a>
+          <a
+            href="#categories"
+            className="w-full sm:w-auto inline-flex items-center justify-center h-[50px] sm:h-[46px] px-8 text-[14px] sm:text-[13px] font-medium text-primary bg-white/55 backdrop-blur-xl border border-white/40 rounded-full hover:bg-white/75 active:scale-[0.97] transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+          >
+            Explore
+          </a>
         </div>
       </div>
     </section>
