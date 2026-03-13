@@ -4,9 +4,10 @@ import { products } from '../data/products'
 
 interface Props {
   onSelectProduct?: (product: Product) => void
+  onViewAll?: () => void
 }
 
-function FeaturedProducts({ onSelectProduct }: Props) {
+function FeaturedProducts({ onSelectProduct, onViewAll }: Props) {
   return (
     <section className="pt-4 pb-12 sm:pt-6 sm:pb-16 lg:py-24 px-4 sm:px-6" id="new-arrivals">
       <div className="max-w-[1200px] mx-auto">
@@ -29,12 +30,12 @@ function FeaturedProducts({ onSelectProduct }: Props) {
 
         {/* CTA — large button */}
         <div className="text-center mt-10 sm:mt-14 px-4 sm:px-0">
-          <a
-            href="#"
-            className="inline-flex items-center justify-center w-full sm:w-auto h-[50px] sm:h-[46px] px-8 text-[14px] sm:text-[13px] font-medium text-primary bg-white/55 backdrop-blur-xl border border-white/40 rounded-full active:scale-[0.97] sm:hover:bg-white/75 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+          <button
+            onClick={onViewAll}
+            className="inline-flex items-center justify-center w-full sm:w-auto h-[50px] sm:h-[46px] px-8 text-[14px] sm:text-[13px] font-medium text-primary bg-white/55 backdrop-blur-xl border border-white/40 rounded-full active:scale-[0.97] sm:hover:bg-white/75 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)] cursor-pointer"
           >
             View All Products
-          </a>
+          </button>
         </div>
       </div>
     </section>

@@ -3,7 +3,11 @@ import { Instagram, Twitter, Facebook } from 'lucide-react'
 const shopLinks = ['T-Shirts', 'Hoodies', 'Tops', 'Sweatshirts']
 const helpLinks = ['Contact', 'Shipping', 'Size Guide', 'FAQs']
 
-function Footer() {
+interface FooterProps {
+  onAdminAccess?: () => void
+}
+
+function Footer({ onAdminAccess }: FooterProps) {
   return (
     <footer className="bg-white/40 backdrop-blur-2xl border-t border-white/40 pt-10 sm:pt-14 lg:pt-16 px-4 sm:px-6">
       <div className="max-w-[1200px] mx-auto">
@@ -45,9 +49,15 @@ function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-5 border-t border-black/5 text-[11px] sm:text-[12px] text-secondary text-center">
           <p>&copy; 2026 WEAR. All rights reserved.</p>
-          <div className="flex gap-5">
+          <div className="flex items-center gap-5">
             <a href="#" className="active:text-primary sm:hover:text-primary transition-colors">Privacy</a>
             <a href="#" className="active:text-primary sm:hover:text-primary transition-colors">Terms</a>
+            <button
+              onClick={onAdminAccess}
+              className="text-secondary/40 hover:text-secondary active:text-primary transition-colors"
+            >
+              Admin
+            </button>
           </div>
         </div>
       </div>
