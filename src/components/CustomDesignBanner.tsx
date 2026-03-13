@@ -1,6 +1,17 @@
 import { Sparkles } from 'lucide-react'
+import { products } from '../data/products'
+import type { Product } from '../types/product'
 
-function CustomDesignBanner() {
+interface Props {
+  onCustomize?: (product: Product) => void
+}
+
+function CustomDesignBanner({ onCustomize }: Props) {
+  const handleTry = () => {
+    const customizable = products.find((p) => p.customizable)
+    if (customizable && onCustomize) onCustomize(customizable)
+  }
+
   return (
     <section className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6">
       <div className="max-w-[1200px] mx-auto">
@@ -13,7 +24,7 @@ function CustomDesignBanner() {
             {/* Tag */}
             <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium tracking-[2px] uppercase text-accent-light mb-4 sm:mb-5 px-3 sm:px-4 py-1.5 rounded-full bg-white/8 backdrop-blur-md border border-white/10">
               <Sparkles size={12} />
-              Coming Soon
+              Try It Now
             </span>
 
             <h2 className="font-display text-[26px] sm:text-[32px] lg:text-[38px] font-semibold text-white tracking-tight mb-3 sm:mb-4">
@@ -21,12 +32,15 @@ function CustomDesignBanner() {
             </h2>
 
             <p className="text-[14px] sm:text-[15px] leading-relaxed text-white/55 mb-6 sm:mb-8 font-light max-w-[400px] mx-auto sm:mx-0">
-              Custom prints, stickers, and clothing that's uniquely yours. Launching soon.
+              Custom prints, colors, and text on any garment. Make it uniquely yours.
             </p>
 
             {/* Large CTA */}
-            <button className="w-full sm:w-auto inline-flex items-center justify-center h-[50px] sm:h-[44px] px-7 text-[14px] sm:text-[13px] font-medium bg-accent text-white rounded-full active:scale-[0.97] sm:hover:bg-accent-dark transition-all shadow-[0_4px_16px_rgba(176,137,104,0.25)] cursor-pointer">
-              Get Notified
+            <button
+              onClick={handleTry}
+              className="w-full sm:w-auto inline-flex items-center justify-center h-[50px] sm:h-[44px] px-7 text-[14px] sm:text-[13px] font-medium bg-accent text-white rounded-full active:scale-[0.97] sm:hover:bg-accent-dark transition-all shadow-[0_4px_16px_rgba(176,137,104,0.25)] cursor-pointer"
+            >
+              Start Customizing
             </button>
           </div>
         </div>

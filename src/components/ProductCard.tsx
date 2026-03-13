@@ -1,16 +1,13 @@
-import { Heart, ShirtIcon } from 'lucide-react'
+import { Heart } from 'lucide-react'
+import type { Product } from '../types/product'
+import GarmentRenderer from './garments/GarmentRenderer'
 
-interface Product {
-  id: number
-  name: string
-  price: number
-  originalPrice?: number
-  tag?: string
-  colors: string[]
-  category: string
+interface Props {
+  product: Product
+  onSelect?: (product: Product) => void
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, onSelect }: Props) {
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0
@@ -18,9 +15,16 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <div className="flex flex-col">
       {/* Image */}
-      <div className="relative aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.5)]">
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/60 to-white/20">
-          <ShirtIcon className="w-8 h-8 sm:w-10 sm:h-10 text-primary/10" strokeWidth={1} />
+      <div
+        className="relative aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.5)] cursor-pointer"
+        onClick={() => onSelect?.(product)}
+      >
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/60 to-white/20 p-6 sm:p-8">
+          <GarmentRenderer
+            type={product.garmentType}
+            color={product.colors[0]}
+            className="w-full h-full drop-shadow-sm"
+          />
         </div>
 
         {/* Tag */}
@@ -42,6 +46,7 @@ function ProductCard({ product }: { product: Product }) {
           <button
             className="absolute top-1 right-1 sm:top-2 sm:right-2 w-[40px] h-[40px] sm:w-[36px] sm:h-[36px] flex items-center justify-center rounded-full bg-white/50 sm:bg-white/60 backdrop-blur-xl text-primary/30 active:text-danger sm:hover:text-danger border border-white/40 transition-all"
             aria-label="Add to wishlist"
+            onClick={(e) => e.stopPropagation()}
           >
             <Heart size={16} strokeWidth={1.5} />
           </button>
@@ -49,14 +54,17 @@ function ProductCard({ product }: { product: Product }) {
 
         {/* Add to cart — always visible on mobile */}
         <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3">
-          <button className="w-full h-[44px] sm:h-[40px] bg-white/65 backdrop-blur-2xl text-primary text-[12px] sm:text-[12px] font-medium uppercase tracking-wider rounded-lg sm:rounded-xl border border-white/50 shadow-[0_4px_16px_rgba(0,0,0,0.06)] active:scale-[0.97] sm:hover:bg-white/85 transition-all cursor-pointer">
+          <button
+            className="w-full h-[44px] sm:h-[40px] bg-white/65 backdrop-blur-2xl text-primary text-[12px] sm:text-[12px] font-medium uppercase tracking-wider rounded-lg sm:rounded-xl border border-white/50 shadow-[0_4px_16px_rgba(0,0,0,0.06)] active:scale-[0.97] sm:hover:bg-white/85 transition-all cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
             Add to Cart
           </button>
         </div>
       </div>
 
       {/* Info */}
-      <div className="flex flex-col gap-0.5 sm:gap-1 px-0.5">
+      <div className="flex flex-col gap-0.5 sm:gap-1 px-0.5 cursor-pointer" onClick={() => onSelect?.(product)}>
         <span className="text-[10px] sm:text-[11px] text-secondary uppercase tracking-wider">
           {product.category}
         </span>
@@ -83,5 +91,4 @@ function ProductCard({ product }: { product: Product }) {
   )
 }
 
-export type { Product }
 export default ProductCard
