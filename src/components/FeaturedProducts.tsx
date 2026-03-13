@@ -68,27 +68,27 @@ const products: Product[] = [
 
 function FeaturedProducts() {
   return (
-    <section className="py-20 max-md:py-12 bg-surface" id="new-arrivals">
+    <section className="py-24 max-md:py-14" id="new-arrivals">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2 className="font-display text-4xl max-md:text-[28px] font-medium text-primary mb-3">
+        <div className="text-center mb-14">
+          <h2 className="font-display text-[34px] max-md:text-[26px] font-semibold text-primary tracking-tight mb-3">
             New Arrivals
           </h2>
-          <p className="text-muted max-w-[500px] mx-auto">
+          <p className="text-secondary text-[17px] font-light max-w-[420px] mx-auto">
             Fresh styles just dropped — be the first to wear them
           </p>
         </div>
 
-        <div className="grid grid-cols-4 max-lg:grid-cols-3 max-md:grid-cols-2 gap-6 max-md:gap-4">
+        <div className="grid grid-cols-4 max-lg:grid-cols-3 max-md:grid-cols-2 gap-5 max-md:gap-4">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
 
-        <div className="text-center mt-12">
+        <div className="text-center mt-14">
           <a
             href="#"
-            className="inline-flex items-center justify-center px-8 py-3.5 text-sm font-medium uppercase tracking-wider bg-transparent border-2 border-primary text-primary rounded-sm hover:bg-primary hover:text-white transition-all"
+            className="inline-flex items-center justify-center px-8 py-3 text-[14px] font-medium text-accent bg-white/60 backdrop-blur-xl border border-white/40 rounded-full hover:bg-white/80 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
           >
             View All Products
           </a>

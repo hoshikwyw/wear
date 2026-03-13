@@ -7,28 +7,28 @@ const categories = [
 
 function Categories() {
   return (
-    <section className="py-20 max-md:py-12" id="categories">
+    <section className="py-24 max-md:py-14" id="categories">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2 className="font-display text-4xl max-md:text-[28px] font-medium text-primary mb-3">
+        <div className="text-center mb-14">
+          <h2 className="font-display text-[34px] max-md:text-[26px] font-semibold text-primary tracking-tight mb-3">
             Shop by Category
           </h2>
-          <p className="text-muted max-w-[500px] mx-auto">
+          <p className="text-secondary text-[17px] font-light max-w-[420px] mx-auto">
             Find exactly what you're looking for
           </p>
         </div>
 
-        <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-6">
+        <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-5">
           {categories.map((cat) => (
             <a
               key={cat.name}
               href="#"
-              className="flex flex-col items-center text-center px-6 py-10 bg-surface border border-border-light rounded hover:border-accent hover:shadow-md hover:-translate-y-1 transition-all"
+              className="group flex flex-col items-center text-center px-6 py-10 rounded-2xl bg-white/50 backdrop-blur-2xl border border-white/50 shadow-[0_2px_16px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.6)] hover:bg-white/70 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)] hover:-translate-y-1 transition-all duration-300"
             >
-              <span className="text-5xl mb-4">{cat.icon}</span>
-              <h3 className="font-sans text-lg font-semibold text-primary mb-2">{cat.name}</h3>
-              <p className="text-sm text-muted mb-4">{cat.description}</p>
-              <span className="text-xs font-medium text-accent-dark uppercase tracking-wider">
+              <span className="text-[44px] mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon}</span>
+              <h3 className="font-sans text-[17px] font-semibold text-primary mb-1.5">{cat.name}</h3>
+              <p className="text-[13px] text-secondary mb-4">{cat.description}</p>
+              <span className="text-[11px] font-medium text-accent uppercase tracking-wider bg-accent/8 px-3 py-1 rounded-full">
                 {cat.count} items
               </span>
             </a>
