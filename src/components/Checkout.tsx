@@ -4,6 +4,7 @@ import {
   MapPin, CreditCard, Banknote, Package,
 } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 type Step = 'shipping' | 'payment' | 'confirm'
 type PaymentMethod = 'cash' | 'card'
@@ -29,6 +30,7 @@ const SHIPPING_FEE = 5.99
 
 function Checkout() {
   const { items, total, isCheckoutOpen, closeCheckout, clearCart, openCart } = useCart()
+  const { user } = useAuth()
 
   const [step, setStep] = useState<Step>('shipping')
   const [payMethod, setPayMethod] = useState<PaymentMethod>('cash')
@@ -39,7 +41,7 @@ function Checkout() {
   const grandTotal = total + shipping
 
   const [ship, setShip] = useState<ShippingForm>({
-    name: '', email: '', phone: '', address: '', city: '', note: '',
+    name: user?.name ?? '', email: user?.email ?? '', phone: '', address: '', city: '', note: '',
   })
   const [card, setCard] = useState<CardForm>({
     number: '', holder: '', expiry: '', cvv: '',

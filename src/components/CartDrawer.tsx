@@ -1,8 +1,19 @@
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 function CartDrawer() {
   const { items, count, total, isOpen, closeCart, openCheckout, removeItem, updateQty, clearCart } = useCart()
+  const { user, openModal } = useAuth()
+
+  const handleCheckout = () => {
+    if (!user) {
+      closeCart()
+      openModal(() => openCheckout())
+    } else {
+      openCheckout()
+    }
+  }
 
   const freeShippingThreshold = 100
   const remaining = freeShippingThreshold - total
@@ -158,7 +169,7 @@ function CartDrawer() {
               <span>${(total >= freeShippingThreshold ? total : total + 5.99).toFixed(2)}</span>
             </div>
 
-            <button onClick={openCheckout} className="h-[52px] bg-primary text-white text-[14px] font-semibold rounded-xl active:scale-[0.97] hover:bg-primary-light transition-all mt-1">
+            <button onClick={handleCheckout} className="h-[52px] bg-primary text-white text-[14px] font-semibold rounded-xl active:scale-[0.97] hover:bg-primary-light transition-all mt-1">
               Checkout
             </button>
             <button onClick={closeCart} className="h-[44px] bg-white/50 border border-white/40 text-primary text-[13px] font-medium rounded-xl active:scale-[0.97] transition-all">

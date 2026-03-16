@@ -1,10 +1,22 @@
-import { useState } from 'react'
-import { Search, ShoppingBag, Menu, X, User } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Search, ShoppingBag, Menu, X, User, LogOut, ChevronDown } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 function Navbar() {
   const [open, setOpen] = useState(false)
+  const [userMenu, setUserMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const { count, openCart } = useCart()
+  const { user, openModal, logout } = useAuth()
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setUserMenu(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 px-3 pt-2 sm:px-4 sm:pt-3">
@@ -32,12 +44,57 @@ function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center">
-            <button className="w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all" aria-label="Search">
+            <button
+              className="w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all"
+              aria-label="Search"
+            >
               <Search size={18} strokeWidth={1.5} />
             </button>
-            <button className="hidden sm:flex w-[44px] h-[44px] items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 transition-all" aria-label="Account">
-              <User size={18} strokeWidth={1.5} />
-            </button>
+
+            {/* User button — desktop */}
+            <div ref={menuRef} className="relative hidden sm:block">
+              {user ? (
+                <button
+                  onClick={() => setUserMenu((v) => !v)}
+                  className="flex items-center gap-1.5 h-[44px] px-2 text-primary/70 hover:text-primary rounded-xl hover:bg-white/40 transition-all"
+                  aria-label="Account"
+                >
+                  <div className="w-[26px] h-[26px] bg-accent/20 rounded-full flex items-center justify-center">
+                    <span className="text-[11px] font-bold text-accent-dark">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-[12px] font-medium max-w-[80px] truncate">{user.name.split(' ')[0]}</span>
+                  <ChevronDown size={13} className={`transition-transform ${userMenu ? 'rotate-180' : ''}`} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => openModal()}
+                  className="w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 transition-all"
+                  aria-label="Sign in"
+                >
+                  <User size={18} strokeWidth={1.5} />
+                </button>
+              )}
+
+              {/* User dropdown */}
+              {userMenu && user && (
+                <div className="absolute right-0 top-[calc(100%+6px)] w-[200px] bg-white/80 backdrop-blur-2xl rounded-2xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.1)] overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-black/5">
+                    <p className="text-[13px] font-semibold text-primary truncate">{user.name}</p>
+                    <p className="text-[11px] text-secondary truncate">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { logout(); setUserMenu(false) }}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] text-danger hover:bg-danger/5 transition-colors"
+                  >
+                    <LogOut size={14} />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={openCart}
               className="relative w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all"
@@ -50,6 +107,7 @@ function Navbar() {
                 </span>
               )}
             </button>
+
             <button
               className="md:hidden w-[44px] h-[44px] flex items-center justify-center text-primary/50 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all"
               aria-label="Toggle menu"
@@ -73,6 +131,29 @@ function Navbar() {
                 {link}
               </a>
             ))}
+            {/* Mobile account row */}
+            <div className="border-t border-black/5 mt-1 pt-1">
+              {user ? (
+                <div className="flex items-center justify-between px-4 h-[48px]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-[28px] h-[28px] bg-accent/20 rounded-full flex items-center justify-center">
+                      <span className="text-[11px] font-bold text-accent-dark">{user.name.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <span className="text-[14px] text-primary font-medium">{user.name.split(' ')[0]}</span>
+                  </div>
+                  <button onClick={() => { logout(); setOpen(false) }} className="flex items-center gap-1.5 text-[13px] text-danger">
+                    <LogOut size={14} /> Sign out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { openModal(); setOpen(false) }}
+                  className="flex items-center gap-2 w-full h-[48px] px-4 text-[14px] text-primary/60 hover:text-primary active:bg-white/40 rounded-xl transition-all"
+                >
+                  <User size={16} strokeWidth={1.5} /> Sign In / Register
+                </button>
+              )}
+            </div>
           </div>
         )}
       </nav>
