@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ArrowLeft, Heart, Minus, Plus, Sparkles } from 'lucide-react'
+import { ArrowLeft, Heart, Minus, Plus, Sparkles, Check } from 'lucide-react'
 import type { Product } from '../types/product'
 import GarmentRenderer from './garments/GarmentRenderer'
+import { useCart } from '../context/CartContext'
 
 interface Props {
   product: Product
@@ -10,13 +11,27 @@ interface Props {
 }
 
 function ProductDetails({ product, onBack, onCustomize }: Props) {
+  const { addItem } = useCart()
   const [selectedColor, setSelectedColor] = useState(product.colors[0])
   const [selectedSize, setSelectedSize] = useState('')
   const [qty, setQty] = useState(1)
+  const [added, setAdded] = useState(false)
+  const [sizeError, setSizeError] = useState(false)
 
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0
+
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      setSizeError(true)
+      setTimeout(() => setSizeError(false), 1200)
+      return
+    }
+    addItem(product, selectedSize, selectedColor, qty)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
+  }
 
   return (
     <div className="min-h-[100dvh] bg-[#f2f0ed]">
@@ -108,12 +123,15 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
 
             {/* Size picker */}
             <div>
-              <span className="text-[12px] font-medium text-primary uppercase tracking-wider">Size</span>
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-medium text-primary uppercase tracking-wider">Size</span>
+                {sizeError && <span className="text-[11px] text-danger font-medium animate-pulse">Please select a size</span>}
+              </div>
+              <div className={`flex flex-wrap gap-2 mt-2 transition-all ${sizeError ? 'ring-2 ring-danger/30 rounded-xl p-2 -m-2' : ''}`}>
                 {product.sizes.map((size) => (
                   <button
                     key={size}
-                    onClick={() => setSelectedSize(size)}
+                    onClick={() => { setSelectedSize(size); setSizeError(false) }}
                     className={`h-[44px] min-w-[50px] px-4 rounded-xl text-[13px] font-medium border transition-all active:scale-[0.95] ${
                       selectedSize === size
                         ? 'bg-primary text-white border-primary'
@@ -170,8 +188,11 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
             </div>
 
             {/* Desktop add to cart */}
-            <button className="hidden sm:flex items-center justify-center h-[52px] bg-primary text-white text-[14px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] hover:bg-primary-light transition-all">
-              Add to Cart — ${product.price * qty}
+            <button
+              onClick={handleAddToCart}
+              className={`hidden sm:flex items-center justify-center gap-2 h-[52px] text-[14px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-all ${added ? 'bg-green-500 text-white' : 'bg-primary text-white hover:bg-primary-light'}`}
+            >
+              {added ? <><Check size={16} strokeWidth={2.5} /> Added to Cart</> : `Add to Cart — $${product.price * qty}`}
             </button>
           </div>
         </div>
@@ -197,8 +218,11 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
             </button>
           </div>
           {/* Add to cart */}
-          <button className="flex-1 h-[48px] bg-primary text-white text-[13px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-transform">
-            Add to Cart — ${product.price * qty}
+          <button
+            onClick={handleAddToCart}
+            className={`flex-1 h-[48px] text-[13px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-all flex items-center justify-center gap-2 ${added ? 'bg-green-500 text-white' : 'bg-primary text-white'}`}
+          >
+            {added ? <><Check size={14} strokeWidth={2.5} /> Added!</> : `Add to Cart — $${product.price * qty}`}
           </button>
         </div>
       </div>

@@ -1,6 +1,8 @@
-import { Heart } from 'lucide-react'
+import { Heart, Check } from 'lucide-react'
+import { useState } from 'react'
 import type { Product } from '../types/product'
 import GarmentRenderer from './garments/GarmentRenderer'
+import { useCart } from '../context/CartContext'
 
 interface Props {
   product: Product
@@ -8,9 +10,19 @@ interface Props {
 }
 
 function ProductCard({ product, onSelect }: Props) {
+  const { addItem } = useCart()
+  const [added, setAdded] = useState(false)
+
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    addItem(product, product.sizes[0], product.colors[0])
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
+  }
 
   return (
     <div className="flex flex-col">
@@ -55,10 +67,10 @@ function ProductCard({ product, onSelect }: Props) {
         {/* Add to cart — always visible on mobile */}
         <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3">
           <button
-            className="w-full h-[44px] sm:h-[40px] bg-white/65 backdrop-blur-2xl text-primary text-[12px] sm:text-[12px] font-medium uppercase tracking-wider rounded-lg sm:rounded-xl border border-white/50 shadow-[0_4px_16px_rgba(0,0,0,0.06)] active:scale-[0.97] sm:hover:bg-white/85 transition-all cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
+            className={`w-full h-[44px] sm:h-[40px] backdrop-blur-2xl text-[12px] font-medium uppercase tracking-wider rounded-lg sm:rounded-xl border shadow-[0_4px_16px_rgba(0,0,0,0.06)] active:scale-[0.97] transition-all cursor-pointer flex items-center justify-center gap-1.5 ${added ? 'bg-green-500/80 border-green-400/50 text-white' : 'bg-white/65 border-white/50 text-primary sm:hover:bg-white/85'}`}
+            onClick={handleAddToCart}
           >
-            Add to Cart
+            {added ? <><Check size={13} strokeWidth={2.5} /> Added</> : 'Add to Cart'}
           </button>
         </div>
       </div>

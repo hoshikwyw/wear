@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Search, ShoppingBag, Menu, X, User } from 'lucide-react'
+import { useCart } from '../context/CartContext'
 
 function Navbar() {
   const [open, setOpen] = useState(false)
+  const { count, openCart } = useCart()
 
   return (
     <header className="sticky top-0 z-50 px-3 pt-2 sm:px-4 sm:pt-3">
@@ -28,7 +30,7 @@ function Navbar() {
             ))}
           </ul>
 
-          {/* Actions — large touch targets (44px min) */}
+          {/* Actions */}
           <div className="flex items-center">
             <button className="w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all" aria-label="Search">
               <Search size={18} strokeWidth={1.5} />
@@ -36,11 +38,17 @@ function Navbar() {
             <button className="hidden sm:flex w-[44px] h-[44px] items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 transition-all" aria-label="Account">
               <User size={18} strokeWidth={1.5} />
             </button>
-            <button className="relative w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all" aria-label="Cart">
+            <button
+              onClick={openCart}
+              className="relative w-[44px] h-[44px] flex items-center justify-center text-primary/35 hover:text-primary/70 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all"
+              aria-label="Cart"
+            >
               <ShoppingBag size={18} strokeWidth={1.5} />
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-0.5 bg-accent text-white text-[9px] font-semibold rounded-full flex items-center justify-center">
-                0
-              </span>
+              {count > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-0.5 bg-accent text-white text-[9px] font-semibold rounded-full flex items-center justify-center">
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
             </button>
             <button
               className="md:hidden w-[44px] h-[44px] flex items-center justify-center text-primary/50 rounded-xl hover:bg-white/40 active:bg-white/50 transition-all"

@@ -2,10 +2,11 @@ import { useState, useRef } from 'react'
 import {
   ArrowLeft, RotateCcw, ShoppingBag,
   Type, ImagePlus, Palette,
-  Bold, Italic, Trash2, Minus, Plus,
+  Bold, Italic, Trash2, Minus, Plus, Check,
 } from 'lucide-react'
 import type { Product } from '../types/product'
 import GarmentRenderer from './garments/GarmentRenderer'
+import { useCart } from '../context/CartContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,8 @@ interface Props {
 }
 
 function ProductCustomizer({ product, onBack }: Props) {
+  const { addItem } = useCart()
+  const [added, setAdded] = useState(false)
   const [garmentColor, setGarmentColor] = useState(product.colors[0])
   const [view, setView] = useState<'front' | 'back'>('front')
   const [designs, setDesigns] = useState<{ front: DesignEl[]; back: DesignEl[] }>({ front: [], back: [] })
@@ -411,9 +414,15 @@ function ProductCustomizer({ product, onBack }: Props) {
             <span className="text-[10px] text-secondary uppercase tracking-wider">Total</span>
             <span className="text-[18px] font-bold text-primary">${product.price}</span>
           </div>
-          <button className="flex-1 flex items-center justify-center gap-2 h-[48px] bg-primary text-white text-[13px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-transform">
-            <ShoppingBag size={16} />
-            Add Custom to Cart
+          <button
+            onClick={() => {
+              addItem(product, product.sizes[0], garmentColor, 1, true)
+              setAdded(true)
+              setTimeout(() => setAdded(false), 1500)
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 h-[48px] text-[13px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-all ${added ? 'bg-green-500 text-white' : 'bg-primary text-white'}`}
+          >
+            {added ? <><Check size={15} strokeWidth={2.5} /> Added!</> : <><ShoppingBag size={16} /> Add Custom to Cart</>}
           </button>
         </div>
       </div>
