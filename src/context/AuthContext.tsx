@@ -1,40 +1,55 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import type { User, StoredUser } from '../types/user'
-
-const USERS_KEY = 'wear_users'
-const SESSION_KEY = 'wear_session'
+import type { User } from '../types/user'
+import { supabase } from '../lib/supabase'
 
 interface AuthContextValue {
   user: User | null
   isModalOpen: boolean
   openModal: (onSuccess?: () => void) => void
   closeModal: () => void
-  login: (email: string, password: string) => string | null   // returns error or null
-  register: (name: string, email: string, password: string) => string | null
+  login: (email: string, password: string) => Promise<string | null>
+  register: (name: string, email: string, password: string) => Promise<string | null>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function getUsers(): StoredUser[] {
-  try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]') } catch { return [] }
-}
-function saveUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-}
-function getSession(): User | null {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null') } catch { return null }
+async function fetchProfile(userId: string): Promise<User | null> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, name, email, role')
+    .eq('id', userId)
+    .single()
+  if (!data) return null
+  return { id: data.id, name: data.name, email: data.email, role: data.role }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(getSession)
+  const [user, setUser] = useState<User | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [onSuccessCb, setOnSuccessCb] = useState<(() => void) | null>(null)
 
   useEffect(() => {
-    if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user))
-    else localStorage.removeItem(SESSION_KEY)
-  }, [user])
+    // Load session on mount
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const profile = await fetchProfile(session.user.id)
+        setUser(profile)
+      }
+    })
+
+    // Keep in sync with Supabase auth state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        const profile = await fetchProfile(session.user.id)
+        setUser(profile)
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const openModal = (onSuccess?: () => void) => {
     setOnSuccessCb(() => onSuccess ?? null)
@@ -46,35 +61,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOnSuccessCb(null)
   }
 
-  const handleSuccess = (loggedIn: User) => {
-    setUser(loggedIn)
+  const handleSuccess = () => {
     setIsModalOpen(false)
     onSuccessCb?.()
     setOnSuccessCb(null)
   }
 
-  const login = (email: string, password: string): string | null => {
-    const users = getUsers()
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password,
-    )
-    if (!found) return 'Incorrect email or password.'
-    handleSuccess({ id: found.id, name: found.name, email: found.email })
+  const login = async (email: string, password: string): Promise<string | null> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return error.message
+    handleSuccess()
     return null
   }
 
-  const register = (name: string, email: string, password: string): string | null => {
-    const users = getUsers()
-    if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
-      return 'An account with this email already exists.'
-    }
-    const newUser: StoredUser = { id: `u_${Date.now()}`, name: name.trim(), email: email.trim().toLowerCase(), password }
-    saveUsers([...users, newUser])
-    handleSuccess({ id: newUser.id, name: newUser.name, email: newUser.email })
+  const register = async (name: string, email: string, password: string): Promise<string | null> => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    })
+    if (error) return error.message
+    handleSuccess()
     return null
   }
 
-  const logout = () => { setUser(null) }
+  const logout = () => { supabase.auth.signOut() }
 
   return (
     <AuthContext.Provider value={{ user, isModalOpen, openModal, closeModal, login, register, logout }}>

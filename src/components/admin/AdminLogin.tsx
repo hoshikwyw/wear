@@ -1,9 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft, Eye, EyeOff, ShieldCheck } from 'lucide-react'
-
-// Temporary frontend-only credentials — replace with Supabase auth later
-const ADMIN_USER = 'admin'
-const ADMIN_PASS = 'wear2026'
+import { supabase } from '../../lib/supabase'
 
 interface Props {
   onLogin: () => void
@@ -11,25 +8,39 @@ interface Props {
 }
 
 function AdminLogin({ onLogin, onBack }: Props) {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    setTimeout(() => {
-      if (username === ADMIN_USER && password === ADMIN_PASS) {
-        onLogin()
-      } else {
-        setError('Invalid username or password.')
-        setLoading(false)
-      }
-    }, 500)
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (signInError || !data.user) {
+      setError('Invalid email or password.')
+      setLoading(false)
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      await supabase.auth.signOut()
+      setError('Access denied. Admin privileges required.')
+      setLoading(false)
+      return
+    }
+
+    onLogin()
   }
 
   return (
@@ -61,17 +72,17 @@ function AdminLogin({ onLogin, onBack }: Props) {
           <p className="text-[13px] text-secondary text-center mb-8">Sign in to manage products</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            {/* Username */}
+            {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-medium text-primary uppercase tracking-wider px-1">
-                Username
+                Email
               </label>
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
-                autoComplete="username"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                autoComplete="email"
                 className="h-[50px] bg-white/50 backdrop-blur-xl rounded-xl border border-white/40 px-4 text-[14px] text-primary placeholder:text-secondary/50 focus:outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10 transition-all"
               />
             </div>
@@ -110,7 +121,7 @@ function AdminLogin({ onLogin, onBack }: Props) {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading || !username || !password}
+              disabled={loading || !email || !password}
               className="mt-2 h-[52px] bg-primary text-white text-[14px] font-semibold rounded-xl active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing in…' : 'Sign In'}

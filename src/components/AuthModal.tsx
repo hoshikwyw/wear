@@ -20,7 +20,7 @@ function AuthModal() {
 
   const switchTab = (t: Tab) => { setTab(t); reset() }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError(null)
 
     if (tab === 'register') {
@@ -29,20 +29,16 @@ function AuthModal() {
       if (password.length < 6) return setError('Password must be at least 6 characters.')
       if (password !== confirm) return setError('Passwords do not match.')
       setLoading(true)
-      setTimeout(() => {
-        const err = register(name, email, password)
-        if (err) setError(err)
-        setLoading(false)
-      }, 600)
+      const err = await register(name, email, password)
+      if (err) setError(err)
+      setLoading(false)
     } else {
       if (!email.trim()) return setError('Please enter your email.')
       if (!password) return setError('Please enter your password.')
       setLoading(true)
-      setTimeout(() => {
-        const err = login(email, password)
-        if (err) setError(err)
-        setLoading(false)
-      }, 600)
+      const err = await login(email, password)
+      if (err) setError(err)
+      setLoading(false)
     }
   }
 
