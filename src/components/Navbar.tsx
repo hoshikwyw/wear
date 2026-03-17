@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, ShoppingBag, Menu, X, User, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react'
+import { Search, ShoppingBag, Menu, X, User, LogOut, ChevronDown, LayoutDashboard, CircleUserRound } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 
 interface Props {
   onAdminAccess?: () => void
+  onOpenProfile?: () => void
 }
 
-function Navbar({ onAdminAccess }: Props) {
+function Navbar({ onAdminAccess, onOpenProfile }: Props) {
   const [open, setOpen] = useState(false)
   const [userMenu, setUserMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -93,6 +94,13 @@ function Navbar({ onAdminAccess }: Props) {
                       </span>
                     )}
                   </div>
+                  <button
+                    onClick={() => { setUserMenu(false); onOpenProfile?.() }}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] text-primary hover:bg-black/5 transition-colors border-b border-black/5"
+                  >
+                    <CircleUserRound size={14} />
+                    My Account
+                  </button>
                   {user.role === 'admin' && (
                     <button
                       onClick={() => { setUserMenu(false); onAdminAccess?.() }}
@@ -169,6 +177,12 @@ function Navbar({ onAdminAccess }: Props) {
                       <LogOut size={14} /> Sign out
                     </button>
                   </div>
+                  <button
+                    onClick={() => { setOpen(false); onOpenProfile?.() }}
+                    className="flex items-center gap-2 w-full h-[48px] px-4 text-[14px] text-primary/70 hover:text-primary active:bg-white/40 rounded-xl transition-all"
+                  >
+                    <CircleUserRound size={16} strokeWidth={1.5} /> My Account
+                  </button>
                   {user.role === 'admin' && (
                     <button
                       onClick={() => { setOpen(false); onAdminAccess?.() }}

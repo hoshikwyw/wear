@@ -10,6 +10,8 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<string | null>
   register: (name: string, email: string, password: string) => Promise<string | null>
   logout: () => void
+  updateProfile: (updates: { name?: string }) => Promise<string | null>
+  updatePassword: (newPassword: string) => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -87,8 +89,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => { supabase.auth.signOut() }
 
+  const updateProfile = async (updates: { name?: string }): Promise<string | null> => {
+    if (!user) return 'Not logged in'
+    const { error } = await supabase.from('profiles').update(updates).eq('id', user.id)
+    if (error) return error.message
+    setUser({ ...user, ...updates })
+    return null
+  }
+
+  const updatePassword = async (newPassword: string): Promise<string | null> => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) return error.message
+    return null
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isModalOpen, openModal, closeModal, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isModalOpen, openModal, closeModal, login, register, logout, updateProfile, updatePassword }}>
       {children}
     </AuthContext.Provider>
   )

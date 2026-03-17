@@ -15,8 +15,9 @@ import ProductCustomizer from './components/ProductCustomizer'
 import AllProducts from './components/AllProducts'
 import AdminLogin from './components/admin/AdminLogin'
 import AdminDashboard from './components/admin/AdminDashboard'
+import UserProfile from './components/UserProfile'
 
-type View = 'home' | 'product-details' | 'customizer' | 'all-products' | 'admin-login' | 'admin'
+type View = 'home' | 'product-details' | 'customizer' | 'all-products' | 'admin-login' | 'admin' | 'profile'
 
 function App() {
   const { user, logout } = useAuth()
@@ -88,6 +89,15 @@ function App() {
     goHome()
   }
 
+  const openProfile = () => {
+    setView('profile')
+    window.scrollTo(0, 0)
+  }
+
+  if (view === 'profile' && user) {
+    return <UserProfile onBack={goHome} />
+  }
+
   if (view === 'admin-login' && user?.role !== 'admin') {
     return <AdminLogin onLogin={handleAdminLogin} onBack={goHome} />
   }
@@ -138,7 +148,7 @@ function App() {
 
   return (
     <>
-      <Navbar onAdminAccess={openAdmin} />
+      <Navbar onAdminAccess={openAdmin} onOpenProfile={openProfile} />
       <main>
         <Hero />
         <Categories
