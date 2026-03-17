@@ -3,6 +3,7 @@ import type { Product } from './types/product'
 import type { AdminCategory } from './types/admin'
 import { supabase } from './lib/supabase'
 import { rowToProduct } from './lib/productMapper'
+import { useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Categories from './components/Categories'
@@ -18,10 +19,10 @@ import AdminDashboard from './components/admin/AdminDashboard'
 type View = 'home' | 'product-details' | 'customizer' | 'all-products' | 'admin-login' | 'admin'
 
 function App() {
+  const { user, logout } = useAuth()
   const [view, setView] = useState<View>('home')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
-  const [isAdminAuthed, setIsAdminAuthed] = useState(false)
 
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<AdminCategory[]>([])
@@ -73,26 +74,25 @@ function App() {
   }
 
   const openAdmin = () => {
-    setView(isAdminAuthed ? 'admin' : 'admin-login')
+    setView(user?.role === 'admin' ? 'admin' : 'admin-login')
     window.scrollTo(0, 0)
   }
 
   const handleAdminLogin = () => {
-    setIsAdminAuthed(true)
     setView('admin')
     window.scrollTo(0, 0)
   }
 
   const handleAdminLogout = () => {
-    setIsAdminAuthed(false)
+    logout()
     goHome()
   }
 
-  if (view === 'admin-login') {
+  if (view === 'admin-login' && user?.role !== 'admin') {
     return <AdminLogin onLogin={handleAdminLogin} onBack={goHome} />
   }
 
-  if (view === 'admin' && isAdminAuthed) {
+  if (view === 'admin' && user?.role === 'admin') {
     return <AdminDashboard onLogout={handleAdminLogout} onBackToStore={goHome} />
   }
 
