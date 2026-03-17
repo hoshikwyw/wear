@@ -148,7 +148,13 @@ function App() {
 
   return (
     <>
-      <Navbar onAdminAccess={openAdmin} onOpenProfile={openProfile} />
+      <Navbar
+        onAdminAccess={openAdmin}
+        onOpenProfile={openProfile}
+        onViewAll={() => openAllProducts()}
+        onSelectProduct={openProduct}
+        products={products}
+      />
       <main>
         <Hero />
         <Categories
