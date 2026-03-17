@@ -156,7 +156,13 @@ function App() {
         products={products}
       />
       <main>
-        <Hero />
+        <Hero
+          onStartDesigning={() => {
+            const p = products.find((p) => p.customizable)
+            if (p) openCustomizer(p)
+          }}
+          onShopNow={() => openAllProducts()}
+        />
         <Categories
           categories={categoriesWithCount}
           loading={storeLoading}
