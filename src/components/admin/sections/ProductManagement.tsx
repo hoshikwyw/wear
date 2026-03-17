@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, X, Check } from 'lucide-react'
 import type { Product, GarmentType } from '../../../types/product'
+import type { AdminCategory } from '../../../types/admin'
+import { supabase } from '../../../lib/supabase'
+import { rowToProduct, productToRow } from '../../../lib/productMapper'
 import GarmentRenderer from '../../garments/GarmentRenderer'
 
 interface Props {
   products: Product[]
+  categories: AdminCategory[]
   onChange: (products: Product[]) => void
 }
 
 const garmentTypes: GarmentType[] = ['tshirt', 'hoodie', 'crop-top', 'long-sleeve', 'sweatshirt']
-const categoryOptions = ['T-Shirts', 'Hoodies', 'Tops', 'Sweatshirts', 'Jackets', 'Polos']
 const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
 type FormState = Omit<Product, 'id'>
@@ -20,11 +23,13 @@ const emptyForm = (): FormState => ({
   garmentType: 'tshirt', customizable: true,
 })
 
-function ProductManagement({ products, onChange }: Props) {
+function ProductManagement({ products, categories, onChange }: Props) {
   const [form, setForm] = useState<FormState | null>(null)
   const [editId, setEditId] = useState<number | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [newColor, setNewColor] = useState('#b08968')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => f ? { ...f, [k]: v } : f)
@@ -32,25 +37,39 @@ function ProductManagement({ products, onChange }: Props) {
   const toggleSize = (s: string) =>
     set('sizes', form!.sizes.includes(s) ? form!.sizes.filter((x) => x !== s) : [...form!.sizes, s])
 
-  const openAdd = () => { setEditId(null); setForm(emptyForm()) }
-  const openEdit = (p: Product) => { setEditId(p.id); setForm({ ...p }) }
-  const closeForm = () => { setForm(null); setEditId(null) }
+  const openAdd = () => { setEditId(null); setForm(emptyForm()); setError(null) }
+  const openEdit = (p: Product) => { setEditId(p.id); setForm({ ...p }); setError(null) }
+  const closeForm = () => { setForm(null); setEditId(null); setError(null) }
 
-  const save = () => {
+  const save = async () => {
     if (!form || !form.name.trim() || !form.price) return
+    setSaving(true)
+    setError(null)
+
+    const row = productToRow(form)
+
     if (editId !== null) {
+      const { error: err } = await supabase.from('products').update(row).eq('id', editId)
+      if (err) { setError(err.message); setSaving(false); return }
       onChange(products.map((p) => p.id === editId ? { ...form, id: editId } : p))
     } else {
-      const newId = Math.max(0, ...products.map((p) => p.id)) + 1
-      onChange([...products, { ...form, id: newId }])
+      const { data, error: err } = await supabase.from('products').insert(row).select().single()
+      if (err || !data) { setError(err?.message ?? 'Failed to add product'); setSaving(false); return }
+      onChange([...products, rowToProduct(data)])
     }
+
+    setSaving(false)
     closeForm()
   }
 
-  const remove = (id: number) => {
+  const remove = async (id: number) => {
+    const { error: err } = await supabase.from('products').delete().eq('id', id)
+    if (err) return
     onChange(products.filter((p) => p.id !== id))
     setDeleteId(null)
   }
+
+  const activeCategories = categories.filter((c) => c.active)
 
   if (form) {
     return (
@@ -76,7 +95,7 @@ function ProductManagement({ products, onChange }: Props) {
 
         <Field label="Category">
           <div className="flex flex-wrap gap-2">
-            {categoryOptions.map((c) => <Chip key={c} label={c} active={form.category === c} onClick={() => set('category', c)} />)}
+            {activeCategories.map((c) => <Chip key={c.id} label={c.name} active={form.category === c.name} onClick={() => set('category', c.name)} />)}
           </div>
         </Field>
 
@@ -111,6 +130,7 @@ function ProductManagement({ products, onChange }: Props) {
 
         <Field label="Material"><input value={form.material} onChange={(e) => set('material', e.target.value)} className={inp} placeholder="e.g. 100% Cotton" /></Field>
         <Field label="Fit"><input value={form.fit} onChange={(e) => set('fit', e.target.value)} className={inp} placeholder="Regular / Slim / Oversized" /></Field>
+        <Field label="Tag"><input value={form.tag ?? ''} onChange={(e) => set('tag', e.target.value || undefined)} className={inp} placeholder="e.g. New, Best Seller (optional)" /></Field>
         <Field label="Description"><textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={3} className={`${inp} h-auto py-3 resize-none`} placeholder="Short description..." /></Field>
 
         <div className="flex items-center justify-between py-3 px-4 bg-white/40 rounded-xl border border-white/30">
@@ -121,9 +141,15 @@ function ProductManagement({ products, onChange }: Props) {
           </button>
         </div>
 
-        <button onClick={save}
-          className="h-[50px] bg-primary text-white text-[13px] font-semibold rounded-xl flex items-center justify-center gap-2 active:scale-[0.97] transition-all mt-2">
-          <Check size={16} /> {editId ? 'Save Changes' : 'Add Product'}
+        {error && (
+          <p className="text-[12px] text-danger bg-danger/5 border border-danger/10 rounded-lg px-3 py-2">{error}</p>
+        )}
+
+        <button onClick={save} disabled={saving}
+          className="h-[50px] bg-primary text-white text-[13px] font-semibold rounded-xl flex items-center justify-center gap-2 active:scale-[0.97] transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          {saving
+            ? <span className="w-[16px] h-[16px] border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            : <><Check size={16} /> {editId ? 'Save Changes' : 'Add Product'}</>}
         </button>
       </div>
     )

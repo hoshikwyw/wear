@@ -1,9 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, ShoppingBag, Menu, X, User, LogOut, ChevronDown } from 'lucide-react'
+import { Search, ShoppingBag, Menu, X, User, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 
-function Navbar() {
+interface Props {
+  onAdminAccess?: () => void
+}
+
+function Navbar({ onAdminAccess }: Props) {
   const [open, setOpen] = useState(false)
   const [userMenu, setUserMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -83,7 +87,21 @@ function Navbar() {
                   <div className="px-4 py-3 border-b border-black/5">
                     <p className="text-[13px] font-semibold text-primary truncate">{user.name}</p>
                     <p className="text-[11px] text-secondary truncate">{user.email}</p>
+                    {user.role === 'admin' && (
+                      <span className="inline-block mt-1 text-[9px] font-semibold tracking-widest uppercase text-accent-dark bg-accent/10 px-2 py-0.5 rounded-full">
+                        Admin
+                      </span>
+                    )}
                   </div>
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => { setUserMenu(false); onAdminAccess?.() }}
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] text-primary hover:bg-black/5 transition-colors border-b border-black/5"
+                    >
+                      <LayoutDashboard size={14} />
+                      Dashboard
+                    </button>
+                  )}
                   <button
                     onClick={() => { logout(); setUserMenu(false) }}
                     className="w-full flex items-center gap-2.5 px-4 py-3 text-[13px] text-danger hover:bg-danger/5 transition-colors"
@@ -134,17 +152,32 @@ function Navbar() {
             {/* Mobile account row */}
             <div className="border-t border-black/5 mt-1 pt-1">
               {user ? (
-                <div className="flex items-center justify-between px-4 h-[48px]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-[28px] h-[28px] bg-accent/20 rounded-full flex items-center justify-center">
-                      <span className="text-[11px] font-bold text-accent-dark">{user.name.charAt(0).toUpperCase()}</span>
+                <>
+                  <div className="flex items-center justify-between px-4 h-[48px]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-[28px] h-[28px] bg-accent/20 rounded-full flex items-center justify-center">
+                        <span className="text-[11px] font-bold text-accent-dark">{user.name.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[14px] text-primary font-medium leading-tight">{user.name.split(' ')[0]}</span>
+                        {user.role === 'admin' && (
+                          <span className="text-[9px] font-semibold tracking-widest uppercase text-accent-dark">Admin</span>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-[14px] text-primary font-medium">{user.name.split(' ')[0]}</span>
+                    <button onClick={() => { logout(); setOpen(false) }} className="flex items-center gap-1.5 text-[13px] text-danger">
+                      <LogOut size={14} /> Sign out
+                    </button>
                   </div>
-                  <button onClick={() => { logout(); setOpen(false) }} className="flex items-center gap-1.5 text-[13px] text-danger">
-                    <LogOut size={14} /> Sign out
-                  </button>
-                </div>
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => { setOpen(false); onAdminAccess?.() }}
+                      className="flex items-center gap-2 w-full h-[48px] px-4 text-[14px] text-primary/70 hover:text-primary active:bg-white/40 rounded-xl transition-all"
+                    >
+                      <LayoutDashboard size={16} strokeWidth={1.5} /> Dashboard
+                    </button>
+                  )}
+                </>
               ) : (
                 <button
                   onClick={() => { openModal(); setOpen(false) }}

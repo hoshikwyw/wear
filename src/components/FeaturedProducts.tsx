@@ -1,13 +1,14 @@
 import ProductCard from './ProductCard'
 import type { Product } from '../types/product'
-import { products } from '../data/products'
 
 interface Props {
+  products: Product[]
+  loading: boolean
   onSelectProduct?: (product: Product) => void
   onViewAll?: () => void
 }
 
-function FeaturedProducts({ onSelectProduct, onViewAll }: Props) {
+function FeaturedProducts({ products, loading, onSelectProduct, onViewAll }: Props) {
   return (
     <section className="pt-4 pb-12 sm:pt-6 sm:pb-16 lg:py-24 px-4 sm:px-6" id="new-arrivals">
       <div className="max-w-[1200px] mx-auto">
@@ -21,14 +22,20 @@ function FeaturedProducts({ onSelectProduct, onViewAll }: Props) {
           </p>
         </div>
 
-        {/* Grid — 2 cols mobile, 3 tablet, 4 desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} onSelect={onSelectProduct} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-2xl bg-white/40 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} onSelect={onSelectProduct} />
+            ))}
+          </div>
+        )}
 
-        {/* CTA — large button */}
         <div className="text-center mt-10 sm:mt-14 px-4 sm:px-0">
           <button
             onClick={onViewAll}

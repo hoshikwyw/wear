@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LayoutDashboard, Package, Tag, Layers, ShoppingBag, LogOut } from 'lucide-react'
 import type { Product } from '../../types/product'
 import type { Order, AdminCategory, StockMap } from '../../types/admin'
-import { products as seedProducts } from '../../data/products'
 import { mockOrders } from '../../data/orders'
-import { initialStock } from '../../data/stock'
-import { initialCategories } from '../../data/categories'
+import { supabase } from '../../lib/supabase'
+import { rowToProduct } from '../../lib/productMapper'
 import OverviewSection from './sections/OverviewSection'
 import ProductManagement from './sections/ProductManagement'
 import CategoryManagement from './sections/CategoryManagement'
@@ -37,12 +36,46 @@ const sectionTitle: Record<Section, string> = {
 
 function AdminDashboard({ onLogout, onBackToStore }: Props) {
   const [section, setSection] = useState<Section>('overview')
-  const [products, setProducts] = useState<Product[]>(seedProducts)
-  const [orders, setOrders] = useState<Order[]>(mockOrders)
-  const [categories, setCategories] = useState<AdminCategory[]>(initialCategories)
-  const [stock, setStock] = useState<StockMap>(initialStock)
+  const [products, setProducts] = useState<Product[]>([])
+  const [orders] = useState<Order[]>(mockOrders)
+  const [categories, setCategories] = useState<AdminCategory[]>([])
+  const [stock, setStock] = useState<StockMap>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadData() {
+      const [{ data: prodRows }, { data: catRows }, { data: stockRows }] = await Promise.all([
+        supabase.from('products').select('*').order('id'),
+        supabase.from('categories').select('*').order('id'),
+        supabase.from('stock').select('product_id, size, qty'),
+      ])
+
+      setProducts((prodRows ?? []).map(rowToProduct))
+
+      setCategories((catRows ?? []).map((r) => ({
+        id: r.id, name: r.name, icon: r.icon, active: r.active,
+      })))
+
+      const stockMap: StockMap = {}
+      for (const row of stockRows ?? []) {
+        if (!stockMap[row.product_id]) stockMap[row.product_id] = {}
+        stockMap[row.product_id][row.size] = row.qty
+      }
+      setStock(stockMap)
+      setLoading(false)
+    }
+    loadData()
+  }, [])
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length
+
+  if (loading) {
+    return (
+      <div className="min-h-[100dvh] bg-[#f2f0ed] flex items-center justify-center">
+        <div className="w-[32px] h-[32px] border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-[100dvh] bg-[#f2f0ed] flex flex-col">
@@ -102,7 +135,7 @@ function AdminDashboard({ onLogout, onBackToStore }: Props) {
           <OverviewSection products={products} categories={categories} orders={orders} stock={stock} />
         )}
         {section === 'products' && (
-          <ProductManagement products={products} onChange={setProducts} />
+          <ProductManagement products={products} categories={categories} onChange={setProducts} />
         )}
         {section === 'categories' && (
           <CategoryManagement categories={categories} products={products} onChange={setCategories} />
@@ -111,7 +144,7 @@ function AdminDashboard({ onLogout, onBackToStore }: Props) {
           <StockManagement products={products} stock={stock} onChange={setStock} />
         )}
         {section === 'orders' && (
-          <OrderManagement orders={orders} onChange={setOrders} />
+          <OrderManagement orders={orders} onChange={() => {}} />
         )}
       </div>
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, Pencil, Trash2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react'
 import type { AdminCategory } from '../../../types/admin'
 import type { Product } from '../../../types/product'
+import { supabase } from '../../../lib/supabase'
 
 interface Props {
   categories: AdminCategory[]
@@ -19,6 +20,7 @@ function CategoryManagement({ categories, products, onChange }: Props) {
   const [newName, setNewName] = useState('')
   const [newIcon, setNewIcon] = useState('👕')
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const countFor = (name: string) => products.filter((p) => p.category === name).length
 
@@ -28,25 +30,49 @@ function CategoryManagement({ categories, products, onChange }: Props) {
   }
   const closeEdit = () => { setEditId(null); setAddMode(false) }
 
-  const saveEdit = () => {
-    if (!editName.trim()) return
-    onChange(categories.map((c) => c.id === editId ? { ...c, name: editName, icon: editIcon } : c))
-    closeEdit()
+  const saveEdit = async () => {
+    if (!editName.trim() || editId === null) return
+    setSaving(true)
+    const { error } = await supabase
+      .from('categories')
+      .update({ name: editName.trim(), icon: editIcon })
+      .eq('id', editId)
+    if (!error) {
+      onChange(categories.map((c) => c.id === editId ? { ...c, name: editName.trim(), icon: editIcon } : c))
+      closeEdit()
+    }
+    setSaving(false)
   }
 
-  const saveAdd = () => {
+  const saveAdd = async () => {
     if (!newName.trim()) return
-    const id = Math.max(0, ...categories.map((c) => c.id)) + 1
-    onChange([...categories, { id, name: newName.trim(), icon: newIcon, active: true }])
-    setNewName(''); setNewIcon('👕'); setAddMode(false)
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ name: newName.trim(), icon: newIcon, active: true })
+      .select()
+      .single()
+    if (!error && data) {
+      onChange([...categories, { id: data.id, name: data.name, icon: data.icon, active: data.active }])
+      setNewName(''); setNewIcon('👕'); setAddMode(false)
+    }
+    setSaving(false)
   }
 
-  const toggle = (id: number) =>
-    onChange(categories.map((c) => c.id === id ? { ...c, active: !c.active } : c))
+  const toggle = async (cat: AdminCategory) => {
+    const { error } = await supabase
+      .from('categories')
+      .update({ active: !cat.active })
+      .eq('id', cat.id)
+    if (!error) onChange(categories.map((c) => c.id === cat.id ? { ...c, active: !c.active } : c))
+  }
 
-  const remove = (id: number) => {
-    onChange(categories.filter((c) => c.id !== id))
-    setDeleteId(null)
+  const remove = async (id: number) => {
+    const { error } = await supabase.from('categories').delete().eq('id', id)
+    if (!error) {
+      onChange(categories.filter((c) => c.id !== id))
+      setDeleteId(null)
+    }
   }
 
   return (
@@ -74,7 +100,10 @@ function CategoryManagement({ categories, products, onChange }: Props) {
           <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Category name"
             className="h-[44px] bg-white/60 rounded-xl border border-white/40 px-4 text-[13px] text-primary placeholder:text-secondary/50 focus:outline-none focus:border-accent/40 transition-all" />
           <div className="flex gap-2">
-            <button onClick={saveAdd} className="flex-1 h-[42px] bg-primary text-white text-[13px] font-medium rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.97]"><Check size={14} /> Save</button>
+            <button onClick={saveAdd} disabled={saving}
+              className="flex-1 h-[42px] bg-primary text-white text-[13px] font-medium rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.97] disabled:opacity-60">
+              {saving ? <span className="w-[14px] h-[14px] border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check size={14} /> Save</>}
+            </button>
             <button onClick={() => setAddMode(false)} className="h-[42px] px-4 bg-white/50 border border-white/40 text-secondary text-[13px] rounded-xl active:scale-[0.97]"><X size={16} /></button>
           </div>
         </div>
@@ -95,7 +124,10 @@ function CategoryManagement({ categories, products, onChange }: Props) {
               <input value={editName} onChange={(e) => setEditName(e.target.value)}
                 className="h-[44px] bg-white/60 rounded-xl border border-white/40 px-4 text-[13px] text-primary focus:outline-none focus:border-accent/40 transition-all" />
               <div className="flex gap-2">
-                <button onClick={saveEdit} className="flex-1 h-[40px] bg-primary text-white text-[13px] rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.97]"><Check size={14} /> Save</button>
+                <button onClick={saveEdit} disabled={saving}
+                  className="flex-1 h-[40px] bg-primary text-white text-[13px] rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.97] disabled:opacity-60">
+                  {saving ? <span className="w-[14px] h-[14px] border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <><Check size={14} /> Save</>}
+                </button>
                 <button onClick={closeEdit} className="h-[40px] px-4 bg-white/50 border border-white/40 text-secondary rounded-xl"><X size={16} /></button>
               </div>
             </div>
@@ -107,7 +139,7 @@ function CategoryManagement({ categories, products, onChange }: Props) {
                 <p className="text-[11px] text-secondary">{countFor(cat.name)} products</p>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => toggle(cat.id)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg text-secondary hover:text-accent transition-colors">
+                <button onClick={() => toggle(cat)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg text-secondary hover:text-accent transition-colors">
                   {cat.active ? <ToggleRight size={20} className="text-accent" /> : <ToggleLeft size={20} />}
                 </button>
                 <button onClick={() => openEdit(cat)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-white/60 border border-white/40 text-secondary hover:text-primary transition-colors"><Pencil size={14} /></button>

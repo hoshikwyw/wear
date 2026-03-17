@@ -1,21 +1,23 @@
 import { useState } from 'react'
 import { ArrowLeft, SlidersHorizontal } from 'lucide-react'
 import type { Product } from '../types/product'
-import { products } from '../data/products'
+import type { AdminCategory } from '../types/admin'
 import ProductCard from './ProductCard'
 
-const categories = ['All', 'T-Shirts', 'Hoodies', 'Tops', 'Sweatshirts', 'Jackets', 'Polos']
-
 interface Props {
+  products: Product[]
+  categories: AdminCategory[]
   initialCategory?: string
   onBack: () => void
   onSelectProduct: (product: Product) => void
 }
 
-function AllProducts({ initialCategory, onBack, onSelectProduct }: Props) {
+function AllProducts({ products, categories, initialCategory, onBack, onSelectProduct }: Props) {
   const [activeCategory, setActiveCategory] = useState(initialCategory || 'All')
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high'>('newest')
   const [showSort, setShowSort] = useState(false)
+
+  const categoryNames = ['All', ...categories.map((c) => c.name)]
 
   const filtered = activeCategory === 'All'
     ? products
@@ -53,12 +55,12 @@ function AllProducts({ initialCategory, onBack, onSelectProduct }: Props) {
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pb-8">
-        {/* Category filter chips — horizontal scroll */}
+        {/* Category filter chips */}
         <div
           className="flex gap-2 overflow-x-auto pb-3 pt-2 -mx-4 px-4 snap-x snap-mandatory"
           style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
         >
-          {categories.map((cat) => (
+          {categoryNames.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
@@ -96,12 +98,10 @@ function AllProducts({ initialCategory, onBack, onSelectProduct }: Props) {
           </div>
         )}
 
-        {/* Results count */}
         <p className="text-[12px] text-secondary mb-4">
           {sorted.length} {sorted.length === 1 ? 'product' : 'products'}
         </p>
 
-        {/* Grid */}
         {sorted.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
             {sorted.map((product) => (

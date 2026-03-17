@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Minus, Plus, AlertTriangle } from 'lucide-react'
 import type { StockMap } from '../../../types/admin'
 import type { Product } from '../../../types/product'
+import { supabase } from '../../../lib/supabase'
 
 interface Props {
   products: Product[]
@@ -11,14 +12,25 @@ interface Props {
 
 function StockManagement({ products, stock, onChange }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+
+  const upsertStock = (productId: number, size: string, qty: number) => {
+    const key = `${productId}-${size}`
+    clearTimeout(debounceRef.current[key])
+    debounceRef.current[key] = setTimeout(async () => {
+      await supabase.from('stock').upsert({ product_id: productId, size, qty })
+    }, 800)
+  }
 
   const setQty = (productId: number, size: string, delta: number) => {
     const current = stock[productId]?.[size] ?? 0
     const next = Math.max(0, current + delta)
-    onChange({
+    const next_stock = {
       ...stock,
       [productId]: { ...(stock[productId] ?? {}), [size]: next },
-    })
+    }
+    onChange(next_stock)
+    upsertStock(productId, size, next)
   }
 
   const setDirect = (productId: number, size: string, value: string) => {
@@ -27,6 +39,7 @@ function StockManagement({ products, stock, onChange }: Props) {
       ...stock,
       [productId]: { ...(stock[productId] ?? {}), [size]: next },
     })
+    upsertStock(productId, size, next)
   }
 
   const totalStock = (productId: number) =>

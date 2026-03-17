@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import type { Product } from './types/product'
+import type { AdminCategory } from './types/admin'
+import { supabase } from './lib/supabase'
+import { rowToProduct } from './lib/productMapper'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Categories from './components/Categories'
@@ -19,6 +22,23 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
   const [isAdminAuthed, setIsAdminAuthed] = useState(false)
+
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<AdminCategory[]>([])
+  const [storeLoading, setStoreLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadStore() {
+      const [{ data: prodRows }, { data: catRows }] = await Promise.all([
+        supabase.from('products').select('*').eq('active', true).order('id'),
+        supabase.from('categories').select('*').eq('active', true).order('id'),
+      ])
+      setProducts((prodRows ?? []).map(rowToProduct))
+      setCategories((catRows ?? []).map((r) => ({ id: r.id, name: r.name, icon: r.icon, active: r.active })))
+      setStoreLoading(false)
+    }
+    loadStore()
+  }, [])
 
   useEffect(() => {
     if (window.location.hash === '#admin') {
@@ -79,6 +99,8 @@ function App() {
   if (view === 'all-products') {
     return (
       <AllProducts
+        products={products}
+        categories={categories}
         initialCategory={selectedCategory}
         onBack={goHome}
         onSelectProduct={openProduct}
@@ -108,14 +130,29 @@ function App() {
     )
   }
 
+  const categoriesWithCount = categories.map((c) => ({
+    name: c.name,
+    icon: c.icon,
+    count: products.filter((p) => p.category === c.name).length,
+  }))
+
   return (
     <>
-      <Navbar />
+      <Navbar onAdminAccess={openAdmin} />
       <main>
         <Hero />
-        <Categories onSelectCategory={(cat) => openAllProducts(cat)} />
-        <FeaturedProducts onSelectProduct={openProduct} onViewAll={() => openAllProducts()} />
-        <CustomDesignBanner onCustomize={openCustomizer} />
+        <Categories
+          categories={categoriesWithCount}
+          loading={storeLoading}
+          onSelectCategory={(cat) => openAllProducts(cat)}
+        />
+        <FeaturedProducts
+          products={products}
+          loading={storeLoading}
+          onSelectProduct={openProduct}
+          onViewAll={() => openAllProducts()}
+        />
+        <CustomDesignBanner products={products} onCustomize={openCustomizer} />
       </main>
       <Footer onAdminAccess={openAdmin} />
     </>

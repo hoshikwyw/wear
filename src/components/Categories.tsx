@@ -1,32 +1,49 @@
-const categories = [
-  { name: 'T-Shirts', icon: '👕', count: 120 },
-  { name: 'Hoodies', icon: '🧥', count: 85 },
-  { name: 'Tops', icon: '👚', count: 96 },
-  { name: 'Sweatshirts', icon: '🧶', count: 64 },
-  { name: 'Jackets', icon: '🧥', count: 42 },
-  { name: 'Polos', icon: '👔', count: 38 },
-]
+interface CategoryItem {
+  name: string
+  icon: string
+  count: number
+}
 
 interface Props {
+  categories: CategoryItem[]
+  loading: boolean
   onSelectCategory?: (category: string) => void
 }
 
-function Categories({ onSelectCategory }: Props) {
+function Categories({ categories, loading, onSelectCategory }: Props) {
   const handleClick = (name: string) => (e: React.MouseEvent) => {
     e.preventDefault()
     onSelectCategory?.(name)
   }
 
+  if (loading) {
+    return (
+      <section className="pt-2 pb-4 sm:pt-4 sm:pb-6 lg:py-16">
+        <div className="px-4 sm:px-6 max-w-[1200px] mx-auto mb-5 sm:mb-8">
+          <h2 className="font-display text-[20px] sm:text-[24px] lg:text-[30px] font-semibold text-primary tracking-tight">
+            Categories
+          </h2>
+        </div>
+        <div className="px-4 sm:px-6 max-w-[1200px] mx-auto flex gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="w-[72px] h-[72px] rounded-2xl bg-white/40 animate-pulse sm:hidden" />
+          ))}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="hidden sm:block h-[64px] w-[160px] rounded-2xl bg-white/40 animate-pulse" />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="pt-2 pb-4 sm:pt-4 sm:pb-6 lg:py-16" id="categories">
-      {/* Header — left aligned on mobile like social apps */}
       <div className="px-4 sm:px-6 max-w-[1200px] mx-auto mb-5 sm:mb-8">
         <h2 className="font-display text-[20px] sm:text-[24px] lg:text-[30px] font-semibold text-primary tracking-tight">
           Categories
         </h2>
       </div>
 
-      {/* Scrollable row on mobile, wrapped grid on desktop */}
       <div className="px-4 sm:px-6 max-w-[1200px] mx-auto">
         {/* Mobile: horizontal scroll */}
         <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide sm:hidden -mx-4 px-4"
@@ -48,7 +65,7 @@ function Categories({ onSelectCategory }: Props) {
           ))}
         </div>
 
-        {/* Tablet+ : pill buttons row */}
+        {/* Tablet+: pill buttons */}
         <div className="hidden sm:flex flex-wrap gap-3 lg:gap-4">
           {categories.map((cat) => (
             <button
@@ -59,7 +76,7 @@ function Categories({ onSelectCategory }: Props) {
               <span className="text-[28px] lg:text-[32px] group-hover:scale-110 transition-transform">{cat.icon}</span>
               <div className="flex flex-col text-left">
                 <span className="text-[14px] lg:text-[15px] font-semibold text-primary leading-tight">{cat.name}</span>
-                <span className="text-[11px] lg:text-[12px] text-secondary">{cat.count} items</span>
+                <span className="text-[11px] lg:text-[12px] text-secondary">{cat.count} {cat.count === 1 ? 'item' : 'items'}</span>
               </div>
             </button>
           ))}
