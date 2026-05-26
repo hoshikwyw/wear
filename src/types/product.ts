@@ -14,4 +14,6 @@ export interface Product {
   fit: string
   garmentType: GarmentType
   customizable: boolean
+  preOrderLimit: number
+  preOrderTaken: number
 }

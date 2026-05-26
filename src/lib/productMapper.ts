@@ -16,10 +16,12 @@ export function rowToProduct(row: any): Product {
     fit: row.fit,
     garmentType: row.garment_type as GarmentType,
     customizable: row.customizable,
+    preOrderLimit: row.pre_order_limit ?? 0,
+    preOrderTaken: row.pre_order_taken ?? 0,
   }
 }
 
-export function productToRow(p: Omit<Product, 'id'>) {
+export function productToRow(p: Omit<Product, 'id' | 'preOrderTaken'>) {
   return {
     name: p.name,
     price: p.price,
@@ -33,5 +35,6 @@ export function productToRow(p: Omit<Product, 'id'>) {
     fit: p.fit,
     garment_type: p.garmentType,
     customizable: p.customizable,
+    pre_order_limit: p.preOrderLimit,
   }
 }

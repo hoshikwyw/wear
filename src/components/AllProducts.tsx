@@ -24,6 +24,9 @@ function AllProducts({ products, categories, initialCategory, onBack, onSelectPr
     : products.filter((p) => p.category === activeCategory)
 
   const sorted = [...filtered].sort((a, b) => {
+    const aOut = a.preOrderTaken >= a.preOrderLimit ? 1 : 0
+    const bOut = b.preOrderTaken >= b.preOrderLimit ? 1 : 0
+    if (aOut !== bOut) return aOut - bOut
     if (sortBy === 'price-low') return a.price - b.price
     if (sortBy === 'price-high') return b.price - a.price
     return 0

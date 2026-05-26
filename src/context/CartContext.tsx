@@ -29,6 +29,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const total = items.reduce((sum, i) => sum + i.product.price * i.qty, 0)
 
   const addItem = (product: Product, size: string, color: string, qty = 1, isCustom = false) => {
+    if (!isCustom) {
+      const remaining = product.preOrderLimit - product.preOrderTaken
+      const alreadyInCart = items
+        .filter((i) => i.product.id === product.id)
+        .reduce((sum, i) => sum + i.qty, 0)
+      const available = Math.max(0, remaining - alreadyInCart)
+      if (available <= 0) return
+      qty = Math.min(qty, available)
+    }
+
     const id = isCustom
       ? `custom-${Date.now()}`
       : `${product.id}-${size}-${color}`
@@ -36,7 +46,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === id)
       if (existing && !isCustom) {
-        return prev.map((i) => i.id === id ? { ...i, qty: i.qty + qty } : i)
+        const cap = product.preOrderLimit - product.preOrderTaken
+        return prev.map((i) => i.id === id ? { ...i, qty: Math.min(i.qty + qty, cap) } : i)
       }
       return [...prev, { id, product, size, color, qty, isCustom }]
     })
@@ -48,7 +59,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) return removeItem(id)
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, qty } : i))
+    setItems((prev) => {
+      const item = prev.find((i) => i.id === id)
+      if (!item || item.isCustom) return prev.map((i) => i.id === id ? { ...i, qty } : i)
+      const cap = item.product.preOrderLimit - item.product.preOrderTaken
+      return prev.map((i) => i.id === id ? { ...i, qty: Math.min(qty, cap) } : i)
+    })
   }
 
   const clearCart = () => setItems([])

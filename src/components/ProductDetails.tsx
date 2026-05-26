@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, Heart, Minus, Plus, Sparkles, Check } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, Sparkles, Check } from 'lucide-react'
 import type { Product } from '../types/product'
 import GarmentRenderer from './garments/GarmentRenderer'
 import { useCart } from '../context/CartContext'
@@ -18,11 +18,21 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
   const [added, setAdded] = useState(false)
   const [sizeError, setSizeError] = useState(false)
 
+  const remaining = product.preOrderLimit - product.preOrderTaken
+  const isSoldOut = remaining <= 0
+  const isLowStock = remaining > 0 && remaining <= 10
+  const pctFilled = product.preOrderLimit > 0
+    ? Math.min(100, (product.preOrderTaken / product.preOrderLimit) * 100)
+    : 100
+
+  const maxQty = Math.min(remaining, 10)
+
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0
 
-  const handleAddToCart = () => {
+  const handlePreOrder = () => {
+    if (isSoldOut) return
     if (!selectedSize) {
       setSizeError(true)
       setTimeout(() => setSizeError(false), 1200)
@@ -48,19 +58,14 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
           <span className="text-[13px] font-medium text-primary truncate max-w-[180px] sm:max-w-none">
             {product.name}
           </span>
-          <button
-            className="w-[44px] h-[44px] flex items-center justify-center -mr-2 text-primary/40 active:text-danger transition-colors"
-            aria-label="Add to wishlist"
-          >
-            <Heart size={20} strokeWidth={1.5} />
-          </button>
+          <div className="w-[44px]" />
         </div>
       </div>
 
       <div className="max-w-[860px] mx-auto px-4 sm:px-6 pb-28">
         <div className="sm:grid sm:grid-cols-2 sm:gap-8 lg:gap-12">
           {/* Garment preview */}
-          <div className="relative aspect-square rounded-2xl overflow-hidden bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.5)] mb-6 sm:mb-0 sm:sticky sm:top-20">
+          <div className={`relative aspect-square rounded-2xl overflow-hidden bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.5)] mb-6 sm:mb-0 sm:sticky sm:top-20 ${isSoldOut ? 'opacity-60' : ''}`}>
             <div className="w-full h-full flex items-center justify-center p-10 sm:p-14">
               <GarmentRenderer
                 type={product.garmentType}
@@ -68,7 +73,14 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
                 className="w-full h-full drop-shadow-md"
               />
             </div>
-            {product.tag && (
+            {isSoldOut && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                <span className="bg-primary/90 backdrop-blur-sm text-white text-[13px] font-bold uppercase tracking-[2px] px-5 py-2 rounded-full">
+                  Sold Out
+                </span>
+              </div>
+            )}
+            {product.tag && !isSoldOut && (
               <span className="absolute top-3 left-3 bg-white/70 backdrop-blur-xl text-primary text-[10px] font-medium uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/50">
                 {product.tag}
               </span>
@@ -92,6 +104,39 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
                       -{discount}%
                     </span>
                   </>
+                )}
+              </div>
+            </div>
+
+            {/* Pre-order availability */}
+            <div className="bg-white/40 backdrop-blur-xl rounded-xl border border-white/30 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">Pre-Order Status</span>
+                {isLowStock && (
+                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                    Only {remaining} left!
+                  </span>
+                )}
+                {isSoldOut && (
+                  <span className="text-[10px] font-semibold text-secondary bg-black/5 px-2 py-0.5 rounded-full">
+                    Fully reserved
+                  </span>
+                )}
+              </div>
+              <div className="h-[6px] bg-black/5 rounded-full overflow-hidden mb-2">
+                <div
+                  className={`h-full rounded-full transition-all ${isSoldOut ? 'bg-secondary/30 w-full' : isLowStock ? 'bg-amber-500' : 'bg-accent'}`}
+                  style={{ width: `${pctFilled}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[12px]">
+                <span className="text-secondary">
+                  {product.preOrderTaken} of {product.preOrderLimit} units reserved
+                </span>
+                {!isSoldOut && (
+                  <span className={`font-semibold ${isLowStock ? 'text-amber-600' : 'text-primary'}`}>
+                    {remaining} remaining
+                  </span>
                 )}
               </div>
             </div>
@@ -131,9 +176,12 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
                 {product.sizes.map((size) => (
                   <button
                     key={size}
+                    disabled={isSoldOut}
                     onClick={() => { setSelectedSize(size); setSizeError(false) }}
                     className={`h-[44px] min-w-[50px] px-4 rounded-xl text-[13px] font-medium border transition-all active:scale-[0.95] ${
-                      selectedSize === size
+                      isSoldOut
+                        ? 'bg-white/30 text-secondary/50 border-white/20 cursor-not-allowed'
+                        : selectedSize === size
                         ? 'bg-primary text-white border-primary'
                         : 'bg-white/50 backdrop-blur-xl text-primary border-white/40 hover:bg-white/70'
                     }`}
@@ -157,7 +205,7 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
             </div>
 
             {/* Customize button */}
-            {product.customizable && (
+            {product.customizable && !isSoldOut && (
               <button
                 onClick={() => onCustomize(product)}
                 className="flex items-center justify-center gap-2 h-[50px] rounded-xl bg-accent/10 backdrop-blur-xl border border-accent/20 text-accent-dark text-[13px] font-semibold uppercase tracking-wider active:scale-[0.97] transition-all"
@@ -167,32 +215,47 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
               </button>
             )}
 
-            {/* Quantity — visible on desktop, on mobile it's in the sticky bar */}
-            <div className="hidden sm:flex items-center gap-4">
-              <span className="text-[12px] font-medium text-primary uppercase tracking-wider">Qty</span>
-              <div className="flex items-center bg-white/50 backdrop-blur-xl rounded-xl border border-white/40">
-                <button
-                  onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-[44px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9] transition-transform"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="w-8 text-center text-[14px] font-medium">{qty}</span>
-                <button
-                  onClick={() => setQty(qty + 1)}
-                  className="w-[44px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9] transition-transform"
-                >
-                  <Plus size={16} />
-                </button>
+            {/* Qty — desktop */}
+            {!isSoldOut && (
+              <div className="hidden sm:flex items-center gap-4">
+                <span className="text-[12px] font-medium text-primary uppercase tracking-wider">Qty</span>
+                <div className="flex items-center bg-white/50 backdrop-blur-xl rounded-xl border border-white/40">
+                  <button
+                    onClick={() => setQty(Math.max(1, qty - 1))}
+                    className="w-[44px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9] transition-transform"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span className="w-8 text-center text-[14px] font-medium">{qty}</span>
+                  <button
+                    onClick={() => setQty(Math.min(maxQty, qty + 1))}
+                    className="w-[44px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9] transition-transform disabled:opacity-40"
+                    disabled={qty >= maxQty}
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                {isLowStock && <span className="text-[11px] text-amber-600">Max {remaining}</span>}
               </div>
-            </div>
+            )}
 
-            {/* Desktop add to cart */}
+            {/* Desktop pre-order button */}
             <button
-              onClick={handleAddToCart}
-              className={`hidden sm:flex items-center justify-center gap-2 h-[52px] text-[14px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-all ${added ? 'bg-green-500 text-white' : 'bg-primary text-white hover:bg-primary-light'}`}
+              onClick={handlePreOrder}
+              disabled={isSoldOut}
+              className={`hidden sm:flex items-center justify-center gap-2 h-[52px] text-[14px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-all ${
+                isSoldOut
+                  ? 'bg-black/10 text-secondary cursor-not-allowed'
+                  : added
+                  ? 'bg-green-500 text-white'
+                  : 'bg-primary text-white hover:bg-primary-light'
+              }`}
             >
-              {added ? <><Check size={16} strokeWidth={2.5} /> Added to Cart</> : `Add to Cart — $${product.price * qty}`}
+              {isSoldOut
+                ? 'Sold Out — No Units Available'
+                : added
+                ? <><Check size={16} strokeWidth={2.5} /> Added to Pre-Order Cart</>
+                : `Pre-Order Now — $${(product.price * qty).toFixed(2)}`}
             </button>
           </div>
         </div>
@@ -201,28 +264,40 @@ function ProductDetails({ product, onBack, onCustomize }: Props) {
       {/* Sticky bottom bar — mobile only */}
       <div className="fixed bottom-0 left-0 right-0 z-30 sm:hidden px-4 pb-4 pt-2">
         <div className="flex items-center gap-3 p-2 bg-white/70 backdrop-blur-2xl rounded-2xl border border-white/40 shadow-[0_-2px_20px_rgba(0,0,0,0.06)]">
-          {/* Qty */}
-          <div className="flex items-center bg-white/60 rounded-xl border border-white/40">
-            <button
-              onClick={() => setQty(Math.max(1, qty - 1))}
-              className="w-[40px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9]"
-            >
-              <Minus size={14} />
-            </button>
-            <span className="w-6 text-center text-[13px] font-medium">{qty}</span>
-            <button
-              onClick={() => setQty(qty + 1)}
-              className="w-[40px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9]"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-          {/* Add to cart */}
+          {!isSoldOut && (
+            <div className="flex items-center bg-white/60 rounded-xl border border-white/40">
+              <button
+                onClick={() => setQty(Math.max(1, qty - 1))}
+                className="w-[40px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9]"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="w-6 text-center text-[13px] font-medium">{qty}</span>
+              <button
+                onClick={() => setQty(Math.min(maxQty, qty + 1))}
+                className="w-[40px] h-[44px] flex items-center justify-center text-primary active:scale-[0.9] disabled:opacity-40"
+                disabled={qty >= maxQty}
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          )}
           <button
-            onClick={handleAddToCart}
-            className={`flex-1 h-[48px] text-[13px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-all flex items-center justify-center gap-2 ${added ? 'bg-green-500 text-white' : 'bg-primary text-white'}`}
+            onClick={handlePreOrder}
+            disabled={isSoldOut}
+            className={`flex-1 h-[48px] text-[13px] font-semibold uppercase tracking-wider rounded-xl active:scale-[0.97] transition-all flex items-center justify-center gap-2 ${
+              isSoldOut
+                ? 'bg-black/10 text-secondary cursor-not-allowed'
+                : added
+                ? 'bg-green-500 text-white'
+                : 'bg-primary text-white'
+            }`}
           >
-            {added ? <><Check size={14} strokeWidth={2.5} /> Added!</> : `Add to Cart — $${product.price * qty}`}
+            {isSoldOut
+              ? 'Sold Out'
+              : added
+              ? <><Check size={14} strokeWidth={2.5} /> Added!</>
+              : `Pre-Order — $${(product.price * qty).toFixed(2)}`}
           </button>
         </div>
       </div>

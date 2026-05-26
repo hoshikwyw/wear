@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { LayoutDashboard, Package, Tag, Layers, ShoppingBag, LogOut } from 'lucide-react'
 import type { Product } from '../../types/product'
 import type { Order, AdminCategory, StockMap } from '../../types/admin'
-import { mockOrders } from '../../data/orders'
 import { supabase } from '../../lib/supabase'
 import { rowToProduct } from '../../lib/productMapper'
 import OverviewSection from './sections/OverviewSection'
@@ -37,17 +36,18 @@ const sectionTitle: Record<Section, string> = {
 function AdminDashboard({ onLogout, onBackToStore }: Props) {
   const [section, setSection] = useState<Section>('overview')
   const [products, setProducts] = useState<Product[]>([])
-  const [orders] = useState<Order[]>(mockOrders)
+  const [orders, setOrders] = useState<Order[]>([])
   const [categories, setCategories] = useState<AdminCategory[]>([])
   const [stock, setStock] = useState<StockMap>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadData() {
-      const [{ data: prodRows }, { data: catRows }, { data: stockRows }] = await Promise.all([
+      const [{ data: prodRows }, { data: catRows }, { data: stockRows }, { data: orderRows }] = await Promise.all([
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
         supabase.from('stock').select('product_id, size, qty'),
+        supabase.from('orders').select('*').order('created_at', { ascending: false }),
       ])
 
       setProducts((prodRows ?? []).map(rowToProduct))
@@ -62,10 +62,31 @@ function AdminDashboard({ onLogout, onBackToStore }: Props) {
         stockMap[row.product_id][row.size] = row.qty
       }
       setStock(stockMap)
+
+      setOrders((orderRows ?? []).map((r) => ({
+        id: r.id,
+        customer: { name: r.customer_name, email: r.customer_email, address: r.customer_address },
+        items: r.items,
+        total: r.total,
+        status: r.status,
+        createdAt: r.created_at,
+      })))
+
       setLoading(false)
     }
     loadData()
   }, [])
+
+  const handleOrderChange = async (updatedOrders: Order[]) => {
+    setOrders(updatedOrders)
+    for (const o of updatedOrders) {
+      const prev = orders.find((x) => x.id === o.id)
+      if (prev && prev.status !== o.status) {
+        await supabase.from('orders').update({ status: o.status }).eq('id', o.id)
+        break
+      }
+    }
+  }
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length
 
@@ -144,7 +165,7 @@ function AdminDashboard({ onLogout, onBackToStore }: Props) {
           <StockManagement products={products} stock={stock} onChange={setStock} />
         )}
         {section === 'orders' && (
-          <OrderManagement orders={orders} onChange={() => {}} />
+          <OrderManagement orders={orders} onChange={handleOrderChange} />
         )}
       </div>
 

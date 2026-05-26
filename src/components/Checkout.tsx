@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 
 type Step = 'shipping' | 'payment' | 'confirm'
 type PaymentMethod = 'cash' | 'card'
@@ -36,6 +37,8 @@ function Checkout() {
   const [payMethod, setPayMethod] = useState<PaymentMethod>('cash')
   const [orderNumber] = useState(`ORD-${Date.now().toString().slice(-6)}`)
   const [errors, setErrors] = useState<Partial<ShippingForm & CardForm>>({})
+  const [ordering, setOrdering] = useState(false)
+  const [orderError, setOrderError] = useState<string | null>(null)
 
   const shipping = total >= FREE_SHIPPING ? 0 : SHIPPING_FEE
   const grandTotal = total + shipping
@@ -87,8 +90,77 @@ function Checkout() {
 
   const goToPayment = () => { if (validateShipping()) setStep('payment') }
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     if (payMethod === 'card' && !validateCard()) return
+    setOrdering(true)
+    setOrderError(null)
+
+    // Validate current availability against live DB values
+    const productIds = [...new Set(items.map((i) => i.product.id))]
+    const { data: freshProducts } = await supabase
+      .from('products')
+      .select('id, name, pre_order_limit, pre_order_taken')
+      .in('id', productIds)
+
+    if (freshProducts) {
+      const cartTotals: Record<number, number> = {}
+      for (const item of items) {
+        cartTotals[item.product.id] = (cartTotals[item.product.id] ?? 0) + item.qty
+      }
+      for (const fp of freshProducts) {
+        const requested = cartTotals[fp.id] ?? 0
+        const available = fp.pre_order_limit - fp.pre_order_taken
+        if (requested > available) {
+          setOrderError(
+            available <= 0
+              ? `"${fp.name}" is now sold out. Please remove it from your cart.`
+              : `Only ${available} unit${available !== 1 ? 's' : ''} of "${fp.name}" are available. Please adjust your quantity.`
+          )
+          setOrdering(false)
+          return
+        }
+      }
+    }
+
+    // Save order
+    const { error: orderErr } = await supabase.from('orders').insert({
+      id: orderNumber,
+      customer_name: ship.name,
+      customer_email: ship.email,
+      customer_address: `${ship.address}, ${ship.city}`,
+      items: items.map((item) => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        size: item.size,
+        color: item.color,
+        qty: item.qty,
+        price: item.product.price,
+      })),
+      total: grandTotal,
+      status: 'pending',
+      payment_method: payMethod,
+      note: ship.note || null,
+      user_id: user?.id ?? null,
+    })
+
+    if (orderErr) {
+      setOrderError('Failed to place pre-order. Please try again.')
+      setOrdering(false)
+      return
+    }
+
+    // Increment pre_order_taken for each product
+    const cartTotals: Record<number, number> = {}
+    for (const item of items) {
+      cartTotals[item.product.id] = (cartTotals[item.product.id] ?? 0) + item.qty
+    }
+    await Promise.all(
+      Object.entries(cartTotals).map(([productId, qty]) =>
+        supabase.rpc('increment_pre_order', { p_product_id: Number(productId), p_qty: qty })
+      )
+    )
+
+    setOrdering(false)
     setStep('confirm')
     clearCart()
   }
@@ -97,6 +169,7 @@ function Checkout() {
     closeCheckout()
     setStep('shipping')
     setErrors({})
+    setOrderError(null)
   }
 
   if (!isCheckoutOpen) return null
@@ -118,7 +191,7 @@ function Checkout() {
           )}
 
           <span className="text-[13px] font-semibold text-primary">
-            {step === 'shipping' ? 'Shipping Details' : step === 'payment' ? 'Payment' : 'Order Placed!'}
+            {step === 'shipping' ? 'Shipping Details' : step === 'payment' ? 'Payment' : 'Pre-Order Confirmed!'}
           </span>
 
           <button onClick={handleClose} className="w-[44px] h-[44px] flex items-center justify-center -mr-2 text-secondary active:scale-[0.95]">
@@ -306,13 +379,13 @@ function Checkout() {
                 <Check size={36} className="text-green-600" strokeWidth={2.5} />
               </div>
               <div>
-                <h2 className="text-[22px] font-bold text-primary">Order Placed!</h2>
-                <p className="text-[14px] text-secondary mt-1">Thank you for shopping with WEAR</p>
+                <h2 className="text-[22px] font-bold text-primary">Pre-Order Confirmed!</h2>
+                <p className="text-[14px] text-secondary mt-1">Your units have been reserved at WEAR</p>
               </div>
 
               <div className="w-full bg-white/55 backdrop-blur-xl rounded-2xl border border-white/40 p-5 text-left flex flex-col gap-3">
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-secondary">Order number</span>
+                  <span className="text-secondary">Pre-order #</span>
                   <span className="font-semibold text-primary font-mono">{orderNumber}</span>
                 </div>
                 <div className="flex justify-between text-[13px]">
@@ -320,7 +393,7 @@ function Checkout() {
                   <span className="font-medium text-primary capitalize">{payMethod === 'cash' ? 'Cash on Delivery' : 'Card'}</span>
                 </div>
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-secondary">Total paid</span>
+                  <span className="text-secondary">Total</span>
                   <span className="font-semibold text-primary">${grandTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-[13px]">
@@ -333,16 +406,11 @@ function Checkout() {
                 <Package size={18} className="text-amber-600 flex-none" />
                 <p className="text-[12px] text-amber-700 text-left">
                   {payMethod === 'cash'
-                    ? 'Your order is confirmed. Please prepare the exact amount on delivery.'
-                    : 'Payment confirmed. Your order is being processed.'}
+                    ? 'Your units are reserved. We\'ll contact you when your order is ready for delivery.'
+                    : 'Payment received. Your pre-order is confirmed and units are reserved for you.'}
                 </p>
               </div>
 
-              <button
-                onClick={() => { handleClose(); openCart() }}
-                className="w-full h-[50px] bg-white/55 backdrop-blur-xl border border-white/40 text-primary text-[14px] font-medium rounded-xl active:scale-[0.97] transition-all"
-                style={{ display: 'none' }}
-              />
               <button
                 onClick={handleClose}
                 className="w-full h-[50px] bg-primary text-white text-[14px] font-semibold rounded-xl active:scale-[0.97] transition-all"
@@ -358,6 +426,11 @@ function Checkout() {
       {step !== 'confirm' && (
         <div className="fixed bottom-0 left-0 right-0 px-4 pb-5 pt-2 bg-[#f2f0ed]/80 backdrop-blur-xl border-t border-black/5">
           <div className="max-w-[640px] mx-auto flex flex-col gap-2">
+            {orderError && (
+              <p className="text-[12px] text-danger bg-danger/5 border border-danger/10 rounded-xl px-3 py-2 text-center">
+                {orderError}
+              </p>
+            )}
             <div className="flex justify-between text-[13px] px-1">
               <span className="text-secondary">Total</span>
               <span className="font-bold text-primary text-[15px]">${grandTotal.toFixed(2)}</span>
@@ -372,9 +445,14 @@ function Checkout() {
             ) : (
               <button
                 onClick={placeOrder}
-                className="h-[52px] bg-accent text-white text-[14px] font-semibold rounded-xl active:scale-[0.97] hover:bg-accent-dark transition-all"
+                disabled={ordering}
+                className="h-[52px] bg-accent text-white text-[14px] font-semibold rounded-xl active:scale-[0.97] hover:bg-accent-dark transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {payMethod === 'cash' ? 'Place Order — Cash on Delivery' : `Pay $${grandTotal.toFixed(2)}`}
+                {ordering
+                  ? <span className="w-[18px] h-[18px] border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  : payMethod === 'cash'
+                  ? 'Confirm Pre-Order — Cash on Delivery'
+                  : `Pre-Order — Pay $${grandTotal.toFixed(2)}`}
               </button>
             )}
           </div>

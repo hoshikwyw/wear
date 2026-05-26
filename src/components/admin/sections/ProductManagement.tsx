@@ -15,12 +15,13 @@ interface Props {
 const garmentTypes: GarmentType[] = ['tshirt', 'hoodie', 'crop-top', 'long-sleeve', 'sweatshirt']
 const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
-type FormState = Omit<Product, 'id'>
+type FormState = Omit<Product, 'id' | 'preOrderTaken'>
 const emptyForm = (): FormState => ({
   name: '', price: 0, originalPrice: undefined, tag: undefined,
   colors: ['#1a1a1a'], category: 'T-Shirts', description: '',
   sizes: ['M'], material: '', fit: 'Regular',
   garmentType: 'tshirt', customizable: true,
+  preOrderLimit: 100,
 })
 
 function ProductManagement({ products, categories, onChange }: Props) {
@@ -38,11 +39,17 @@ function ProductManagement({ products, categories, onChange }: Props) {
     set('sizes', form!.sizes.includes(s) ? form!.sizes.filter((x) => x !== s) : [...form!.sizes, s])
 
   const openAdd = () => { setEditId(null); setForm(emptyForm()); setError(null) }
-  const openEdit = (p: Product) => { setEditId(p.id); setForm({ ...p }); setError(null) }
+  const openEdit = (p: Product) => {
+    setEditId(p.id)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, preOrderTaken: _taken, ...rest } = p
+    setForm(rest)
+    setError(null)
+  }
   const closeForm = () => { setForm(null); setEditId(null); setError(null) }
 
   const save = async () => {
-    if (!form || !form.name.trim() || !form.price) return
+    if (!form || !form.name.trim() || !form.price || !form.preOrderLimit) return
     setSaving(true)
     setError(null)
 
@@ -51,7 +58,11 @@ function ProductManagement({ products, categories, onChange }: Props) {
     if (editId !== null) {
       const { error: err } = await supabase.from('products').update(row).eq('id', editId)
       if (err) { setError(err.message); setSaving(false); return }
-      onChange(products.map((p) => p.id === editId ? { ...form, id: editId } : p))
+      const existing = products.find((p) => p.id === editId)
+      onChange(products.map((p) => p.id === editId
+        ? { ...form, id: editId, preOrderTaken: existing?.preOrderTaken ?? 0 }
+        : p
+      ))
     } else {
       const { data, error: err } = await supabase.from('products').insert(row).select().single()
       if (err || !data) { setError(err?.message ?? 'Failed to add product'); setSaving(false); return }
@@ -86,12 +97,33 @@ function ProductManagement({ products, categories, onChange }: Props) {
           <GarmentRenderer type={form.garmentType} color={form.colors[0]} className="h-full drop-shadow" />
         </div>
 
-        <Field label="Name"><input value={form.name} onChange={(e) => set('name', e.target.value)} className={inp} placeholder="Product name" /></Field>
+        <Field label="Name">
+          <input value={form.name} onChange={(e) => set('name', e.target.value)} className={inp} placeholder="Product name" />
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Price ($)"><input type="number" value={form.price || ''} onChange={(e) => set('price', Number(e.target.value))} className={inp} placeholder="0" /></Field>
-          <Field label="Original ($)"><input type="number" value={form.originalPrice || ''} onChange={(e) => set('originalPrice', e.target.value ? Number(e.target.value) : undefined)} className={inp} placeholder="Optional" /></Field>
+          <Field label="Price ($)">
+            <input type="number" value={form.price || ''} onChange={(e) => set('price', Number(e.target.value))} className={inp} placeholder="0" />
+          </Field>
+          <Field label="Original ($)">
+            <input type="number" value={form.originalPrice || ''} onChange={(e) => set('originalPrice', e.target.value ? Number(e.target.value) : undefined)} className={inp} placeholder="Optional" />
+          </Field>
         </div>
+
+        {/* Pre-order limit — required */}
+        <Field label="Pre-Order Limit">
+          <div className="flex flex-col gap-1">
+            <input
+              type="number"
+              min={1}
+              value={form.preOrderLimit || ''}
+              onChange={(e) => set('preOrderLimit', Math.max(1, Number(e.target.value)))}
+              className={inp}
+              placeholder="e.g. 100"
+            />
+            <p className="text-[11px] text-secondary px-1">Total units available for pre-order</p>
+          </div>
+        </Field>
 
         <Field label="Category">
           <div className="flex flex-wrap gap-2">
@@ -128,10 +160,18 @@ function ProductManagement({ products, categories, onChange }: Props) {
           </div>
         </Field>
 
-        <Field label="Material"><input value={form.material} onChange={(e) => set('material', e.target.value)} className={inp} placeholder="e.g. 100% Cotton" /></Field>
-        <Field label="Fit"><input value={form.fit} onChange={(e) => set('fit', e.target.value)} className={inp} placeholder="Regular / Slim / Oversized" /></Field>
-        <Field label="Tag"><input value={form.tag ?? ''} onChange={(e) => set('tag', e.target.value || undefined)} className={inp} placeholder="e.g. New, Best Seller (optional)" /></Field>
-        <Field label="Description"><textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={3} className={`${inp} h-auto py-3 resize-none`} placeholder="Short description..." /></Field>
+        <Field label="Material">
+          <input value={form.material} onChange={(e) => set('material', e.target.value)} className={inp} placeholder="e.g. 100% Cotton" />
+        </Field>
+        <Field label="Fit">
+          <input value={form.fit} onChange={(e) => set('fit', e.target.value)} className={inp} placeholder="Regular / Slim / Oversized" />
+        </Field>
+        <Field label="Tag">
+          <input value={form.tag ?? ''} onChange={(e) => set('tag', e.target.value || undefined)} className={inp} placeholder="e.g. New, Best Seller (optional)" />
+        </Field>
+        <Field label="Description">
+          <textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={3} className={`${inp} h-auto py-3 resize-none`} placeholder="Short description..." />
+        </Field>
 
         <div className="flex items-center justify-between py-3 px-4 bg-white/40 rounded-xl border border-white/30">
           <span className="text-[13px] font-medium text-primary">Customizable</span>
@@ -165,37 +205,62 @@ function ProductManagement({ products, categories, onChange }: Props) {
         </button>
       </div>
 
-      {products.map((p) => (
-        <div key={p.id} className="flex items-center gap-3 bg-white/50 backdrop-blur-xl rounded-xl border border-white/40 p-3">
-          <div className="w-[52px] h-[52px] bg-white/60 rounded-xl flex items-center justify-center flex-none p-2">
-            <GarmentRenderer type={p.garmentType} color={p.colors[0]} className="w-full h-full" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-primary truncate">{p.name}</p>
-            <p className="text-[11px] text-secondary">{p.category} · ${p.price}</p>
-            <div className="flex gap-1 mt-1">
-              {p.colors.slice(0, 4).map((c) => (
-                <span key={c} className="w-[10px] h-[10px] rounded-full border border-white/60" style={{ background: c }} />
-              ))}
+      {products.map((p) => {
+        const remaining = p.preOrderLimit - p.preOrderTaken
+        const isSoldOut = remaining <= 0
+        const pct = p.preOrderLimit > 0 ? Math.min(100, (p.preOrderTaken / p.preOrderLimit) * 100) : 100
+
+        return (
+          <div key={p.id} className="flex items-center gap-3 bg-white/50 backdrop-blur-xl rounded-xl border border-white/40 p-3">
+            <div className="w-[52px] h-[52px] bg-white/60 rounded-xl flex items-center justify-center flex-none p-2">
+              <GarmentRenderer type={p.garmentType} color={p.colors[0]} className="w-full h-full" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-[13px] font-medium text-primary truncate">{p.name}</p>
+                {isSoldOut && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-white bg-secondary/70 px-1.5 py-0.5 rounded-full flex-none">
+                    Sold Out
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-secondary">{p.category} · ${p.price}</p>
+              {/* Pre-order progress */}
+              <div className="mt-1.5">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className={`text-[10px] ${isSoldOut ? 'text-secondary/60' : 'text-secondary'}`}>
+                    {p.preOrderTaken} / {p.preOrderLimit} reserved
+                  </span>
+                  {!isSoldOut && (
+                    <span className="text-[10px] font-medium text-accent">{remaining} left</span>
+                  )}
+                </div>
+                <div className="h-[3px] bg-black/5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${isSoldOut ? 'bg-secondary/30 w-full' : 'bg-accent'}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              <button onClick={() => openEdit(p)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-white/60 border border-white/40 text-secondary hover:text-primary transition-colors">
+                <Pencil size={14} />
+              </button>
+              {deleteId === p.id ? (
+                <div className="flex gap-1">
+                  <button onClick={() => remove(p.id)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger"><Check size={14} /></button>
+                  <button onClick={() => setDeleteId(null)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-white/60 border border-white/40 text-secondary"><X size={14} /></button>
+                </div>
+              ) : (
+                <button onClick={() => setDeleteId(p.id)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-white/60 border border-white/40 text-secondary hover:text-danger transition-colors">
+                  <Trash2 size={14} />
+                </button>
+              )}
             </div>
           </div>
-          <div className="flex gap-1">
-            <button onClick={() => openEdit(p)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-white/60 border border-white/40 text-secondary hover:text-primary transition-colors">
-              <Pencil size={14} />
-            </button>
-            {deleteId === p.id ? (
-              <div className="flex gap-1">
-                <button onClick={() => remove(p.id)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger"><Check size={14} /></button>
-                <button onClick={() => setDeleteId(null)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-white/60 border border-white/40 text-secondary"><X size={14} /></button>
-              </div>
-            ) : (
-              <button onClick={() => setDeleteId(p.id)} className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-white/60 border border-white/40 text-secondary hover:text-danger transition-colors">
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Projects\\\\wear\" -Recurse -Depth 2)",
+      "Bash(Select-Object -Property FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$|config\")",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(Start-Sleep -Seconds 3)",
+      "Bash(Get-Content \"C:\\\\Users\\\\khaing7\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Projects-wear\\\\86fcbd44-024e-44a1-98a5-4923b7d7131b\\\\tasks\\\\b7lxprkxp.output\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Process -NoNewWindow -FilePath \"npx\" -ArgumentList \"vite\",\"--port\",\"5173\" -WorkingDirectory \"c:\\\\Projects\\\\wear\")",
+      "PowerShell(Test-NetConnection -ComputerName localhost -Port 5173 -InformationLevel Quiet 2>&1)"
+    ]
+  }
+}
